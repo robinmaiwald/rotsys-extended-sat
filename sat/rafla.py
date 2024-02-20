@@ -20,8 +20,8 @@ parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove ass
 
 parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane Hamiltonian cycle")
 
-parser.add_argument("-r2f","--rs2file", help="if specified, export rotation systems to this file")
-parser.add_argument("-c2f","--cnf2file", default="test.cnf", help="if specified, export CNF to this file")
+parser.add_argument("-or","--rs2file", help="if specified, export rotation systems to this file")
+parser.add_argument("-oc","--cnf2file", help="if specified, export CNF to this file")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 parser.add_argument("--debug","-d",type=int,default=0,help="debug level")
 
@@ -164,7 +164,7 @@ if args.cnf2file:
     cnf = CNF()
     for c in constraints: cnf.append(c)
     cnf.to_file(args.cnf2file)
-    #exit()
+    exit()
 
 
 outfile = None
