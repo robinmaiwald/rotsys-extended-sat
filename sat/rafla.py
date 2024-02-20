@@ -25,6 +25,8 @@ parser.add_argument("-oc","--cnf2file", help="if specified, export CNF to this f
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 parser.add_argument("--debug","-d",type=int,default=0,help="debug level")
 
+parser.add_argument("--use_rs",action='store_true', help="use variables for encoding rotations system via permutations")
+
 args = parser.parse_args()
 print("args",args)
  
@@ -39,59 +41,106 @@ vpool = IDPool()
 constraints = []
 
 # initialize variables
-var_rotsys = {(a,i,b):vpool.id() for a in N for i in N_without_last for b in N_without[a]} 
-var_a_sees_bcd = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)} 
-var_ab_cross_cd = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)} 
-var_ab_cross_cd_directed = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)}
+if args.use_rs: 
+    var_rotsys = {(a,i,b):vpool.id() for a in N for i in N_without_last for b in N_without[a]} 
 
-
-print ("(*) wlog: first column is 1,0,0,...,0")
-constraints.append([var_rotsys[0,0,1]])
-for a in N_without[0]:
-    constraints.append([var_rotsys[a,0,0]])
+var_a_sees_bcd = {}
+for a in N:
+    for b,c,d in combinations(N_without[a],3):
+        var_a_sees_bcd[a,b,c,d] = var_a_sees_bcd[a,c,d,b] = var_a_sees_bcd[a,d,b,c] = vpool.id()
+        var_a_sees_bcd[a,b,d,c] = var_a_sees_bcd[a,c,b,d] = var_a_sees_bcd[a,d,c,b] = -var_a_sees_bcd[a,b,c,d]
         
 
-if args.natural:
-    print ("(*) wlog: first line is 1,2,3,4,...")
-    for a in N_without_last:
-        constraints.append([var_rotsys[0,a,a+1]])
+#var_ab_cross_cd = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)}
+
+def blub(a,b,c,d):
+    if a>b: return blub(b,a,c,d)
+    if c>d: return blub(a,b,d,c)
+    if a>c: return blub(c,d,a,b)
+    return 'blub',(a,b,c,d)
 
 
-# creates clauses to ensure exactly one of the given literals is true
-def exactly_one_clauses(literals):
-	return [literals]+[[-l1,-l2] for l1,l2 in combinations(literals,2)]
+def bla(a,b,c,d):
+    return 'bla',min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
 
-print ("(*) assert permutations",len(constraints))
-for a in N:
-    for i in N_without_last:
-        constraints += exactly_one_clauses([var_rotsys[a,i,b] for b in N_without[a]])
-
-    for b in N_without[a]:
-        constraints += exactly_one_clauses([var_rotsys[a,i,b] for i in N_without_last])
+var_ab_cross_cd = {(a,b,c,d):vpool.id(blub(a,b,c,d)) for a,b,c,d in permutations(N,4)}
+var_ab_cross_cd_directed = {(a,b,c,d):vpool.id(bla(a,b,c,d)) for a,b,c,d in permutations(N,4)}
 
 
 # ensure both variables have the same value (logical XNOR)
 def equality_clauses(a,b):
 	return [[-a,+b],[+a,-b]]
-
-print ("(*) assert a_sees_bcd",len(constraints))
-for a in N:
-    for b,c,d in combinations(N_without[a],3):
-        for x,y,z in permutations([b,c,d]):
-            inversions = sum(+1 for u,v in combinations([x,y,z],2) if u>v)
-            sign = (-1)**inversions
-            constraints += equality_clauses(+var_a_sees_bcd[a,b,c,d],+sign*var_a_sees_bcd[a,x,y,z])
-
-
+	
+# creates clauses to ensure exactly one of the given literals is true
+def exactly_one_clauses(literals):
+	return [literals]+[[-l1,-l2] for l1,l2 in combinations(literals,2)]
+	
+# creates clauses to ensure exactly one of the given literals is true
+def at_most_one_clauses(literals):
+	return [[-l1,-l2] for l1,l2 in combinations(literals,2)]
+	
 # if all if_literals are fulfilled, then all then_literals must be fulfilled
 def if_then_clauses(if_literals,then_literals):
 	return [[-i for i in if_literals]+[t] for t in then_literals]
 
 
-print ("(*) assert a_sees_bcd",len(constraints))
-for a,b,c,d in permutations(N,4):
-    for i,j,k in combinations(N_without_last,3):
-        constraints += if_then_clauses([+var_rotsys[a,i,b],+var_rotsys[a,j,c],+var_rotsys[a,k,d]],[+var_a_sees_bcd[a,b,c,d]])
+# literal A is fulfilled if and only if at least one B are fulfilled 
+def A_equals_disjunctionB_clauses(A_literal,B_literals):
+	return [[-A_literal]+B_literals]+[[+A_literal,-b] for b in B_literals]
+
+# literal A is fulfilled if and only if all B's are fulfilled 
+def A_equals_conjunctionB_clauses(A_literal,B_literals):
+	return [[-A_literal,+b] for b in B_literals]+[[+A_literal]+[-b for b in B_literals]]
+
+if args.use_rs:
+    print ("(*) wlog: first column is 1,0,0,...,0")
+    constraints.append([var_rotsys[0,0,1]])
+    for a in N_without[0]:
+        constraints.append([var_rotsys[a,0,0]])
+        
+
+    if args.natural:
+        print ("(*) wlog: first line is 1,2,3,4,...")
+        for a in N_without_last:
+            constraints.append([var_rotsys[0,a,a+1]])
+
+
+    print ("(*) assert permutations",len(constraints))
+    for a in N:
+        for i in N_without_last:
+            constraints += exactly_one_clauses([var_rotsys[a,i,b] for b in N_without[a]])
+
+        for b in N_without[a]:
+            constraints += exactly_one_clauses([var_rotsys[a,i,b] for i in N_without_last])
+
+
+
+ 
+    print ("(*) assert a_sees_bcd",len(constraints))
+    for a in N:
+        for b,c,d in combinations(N_without[a],3):
+            for x,y,z in permutations([b,c,d]):
+                inversions = sum(+1 for u,v in combinations([x,y,z],2) if u>v)
+                sign = (-1)**inversions
+                constraints += equality_clauses(+var_a_sees_bcd[a,b,c,d],+sign*var_a_sees_bcd[a,x,y,z])
+                
+    print ("(*) assert a_sees_bcd",len(constraints))
+    for a,b,c,d in permutations(N,4):
+        for i,j,k in combinations(N_without_last,3):
+            constraints += if_then_clauses([+var_rotsys[a,i,b],+var_rotsys[a,j,c],+var_rotsys[a,k,d]],[+var_a_sees_bcd[a,b,c,d]])
+
+if 1:            
+    print ("(*) assert a_sees_bcd",len(constraints))
+    for x in N: # for every element we have a cyclic order which is encoded through forbidden patterns on 4-element subsets
+        for a,b,c,d in combinations(N_without[x],4):
+            #triples = list(J for J in combinations(I,3))
+            for s1,s2,s3,s4 in [[+1,-1,+1,-1],[-1,+1,-1,+1],[+1,-1,-1,-1],[-1,+1,-1,-1],[-1,-1,+1,-1],[-1,-1,-1,+1],[-1,+1,+1,+1],[+1,-1,+1,+1],[+1,+1,-1,+1],[+1,+1,+1,-1]]:
+                constraints.append( [s1*var_a_sees_bcd[x,a,b,c],s2*var_a_sees_bcd[x,a,b,d],s3*var_a_sees_bcd[x,a,c,d],s4*var_a_sees_bcd[x,b,c,d]])
+    
+    if args.natural:
+        for a,b,c in combinations(N_without[0],3):
+            constraints.append([var_a_sees_bcd[0,a,b,c]])
+        
 
 
 def forbid_subrs(subrs):
@@ -115,15 +164,6 @@ if args.valid5tuples:
     constraints += forbid_subrs(
         [[1,2,3,4],[0,2,4,3],[0,3,1,4],[0,4,2,1],[0,1,3,2]]) # forbidden type II
 
-
-# literal A is fulfilled if and only if at least one B are fulfilled 
-def A_equals_disjunctionB_clauses(A_literal,B_literals):
-	return [[-A_literal]+B_literals]+[[+A_literal,-b] for b in B_literals]
-
-# literal A is fulfilled if and only if all B's are fulfilled 
-def A_equals_conjunctionB_clauses(A_literal,B_literals):
-	return [[-A_literal,+b] for b in B_literals]+[[+A_literal]+[-b for b in B_literals]]
-
 if 1:
 	print ("(*) assert ab_cross_cd",len(constraints))
 	for a,b,c,d in permutations(N,4):
@@ -136,7 +176,10 @@ if 1:
 
 	    constraints += A_equals_disjunctionB_clauses(+var_ab_cross_cd[a,b,c,d],[
 	    	+var_ab_cross_cd_directed[a,b,c,d],
-	        +var_ab_cross_cd_directed[a,b,c,d]])
+	        +var_ab_cross_cd_directed[a,b,d,c]])
+        
+	    constraints += at_most_one_clauses([+var_ab_cross_cd_directed[a,b,c,d],
+	    	+var_ab_cross_cd_directed[a,b,d,c]])
 
 
 def forbid_planar_subgraph(edges):
@@ -198,21 +241,43 @@ if True:
     for sol in solution_iterator:
         ct += 1
         sol = set(sol) # it's faster to lookup values in set than in list
-
         rs = []
-        for a in N:
-            order_a = []
-            for i in N_without_last:
-                for b in N_without[a]:
-                    if var_rotsys[a,i,b] in sol:
-                        order_a.append(b)
+        if args.use_rs:
+            for a in N:
+                order_a = []
+                for i in N_without_last:
+                    for b in N_without[a]:
+                        if var_rotsys[a,i,b] in sol:
+                            order_a.append(b)
 
-            rs.append(order_a)
+                rs.append(order_a)
+        else:
+            for x in N:
+                y = min(N_without[x])
+                order_x = [y]
+                remaining = set(N) - {x,y}
+                while remaining:
+                    next_found = False
+                    for a in remaining:
+                        a_is_next = True
+                        for b in remaining - {a}:
+                            if -var_a_sees_bcd[x,y,a,b] in sol:
+                                a_is_next = False
+                                break
+                        if a_is_next: 
+                            order_x.append(a)
+                            remaining.remove(a)
+                            next_found = True
+                            break
+                    #print("nextfound",x,y,remaining)
+                    assert(next_found)
+                rs.append(order_x)
         
+        print (datetime.datetime.now(),"solution #",ct,"\t",rs)
         assert(rs not in found)        
         found.append(rs)
         if outfile: outfile.write(str(rs)+"\n")
-        print (datetime.datetime.now(),"solution #",ct,"\t",rs)
+        
         
         if not args.all: break
 
