@@ -22,6 +22,7 @@ parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane H
 
 parser.add_argument("-or","--rs2file", help="if specified, export rotation systems to this file")
 parser.add_argument("-oc","--cnf2file", help="if specified, export CNF to this file")
+parser.add_argument("-ov","--var2file", help="if specified, export variables to this file")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 parser.add_argument("--debug","-d",type=int,default=0,help="debug level")
 
@@ -42,29 +43,30 @@ constraints = []
 
 # initialize variables
 if args.use_rs: 
-    var_rotsys = {(a,i,b):vpool.id() for a in N for i in N_without_last for b in N_without[a]} 
+    var_rotsys = {(a,i,b):vpool.id(f"R{a}{i}{b}") for a in N for i in N_without_last for b in N_without[a]} 
 
 var_a_sees_bcd = {}
 for a in N:
     for b,c,d in combinations(N_without[a],3):
-        var_a_sees_bcd[a,b,c,d] = var_a_sees_bcd[a,c,d,b] = var_a_sees_bcd[a,d,b,c] = vpool.id()
+        var_a_sees_bcd[a,b,c,d] = var_a_sees_bcd[a,c,d,b] = var_a_sees_bcd[a,d,b,c] = vpool.id(f"S{a}{b}{c}{d}")
         var_a_sees_bcd[a,b,d,c] = var_a_sees_bcd[a,c,b,d] = var_a_sees_bcd[a,d,c,b] = -var_a_sees_bcd[a,b,c,d]
         
 
 #var_ab_cross_cd = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)}
 
-def blub(a,b,c,d):
-    if a>b: return blub(b,a,c,d)
-    if c>d: return blub(a,b,d,c)
-    if a>c: return blub(c,d,a,b)
-    return 'blub',(a,b,c,d)
+def cross(a,b,c,d):
+    if a>b: return cross(b,a,c,d)
+    if c>d: return cross(a,b,d,c)
+    if a>c: return cross(c,d,a,b)
+    return vpool.id(f"C{a}{b}{c}{d}")
 
 
-def bla(a,b,c,d):
-    return 'bla',min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
+def dcross(a,b,c,d):
+    a,b,c,d = min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
+    return vpool.id(f"D{a}{b}{c}{d}")
 
-var_ab_cross_cd = {(a,b,c,d):vpool.id(blub(a,b,c,d)) for a,b,c,d in permutations(N,4)}
-var_ab_cross_cd_directed = {(a,b,c,d):vpool.id(bla(a,b,c,d)) for a,b,c,d in permutations(N,4)}
+var_ab_cross_cd = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(N,4)}
+var_ab_cross_cd_directed = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 
 
 # ensure both variables have the same value (logical XNOR)
@@ -200,6 +202,15 @@ time_before_solving = datetime.datetime.now()
 print("creating time:",time_before_solving-time_start)
 print ()
 
+
+if args.var2file == '_':
+    args.var2file = args.cnf2file+".var"
+
+if args.var2file:
+    print ("write variables to file:",args.var2file)
+    with open(args.var2file,"w") as f:
+        f.write(str(vpool.id2obj)+"\n")
+        f.close()
 
 if args.cnf2file:
     print ("write cnf instance to file:",args.cnf2file)

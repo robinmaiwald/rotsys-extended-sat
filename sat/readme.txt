@@ -1,10 +1,10 @@
-python rafla.py -HC 7 --cnf2file test.cnf 
-# create CNF
+python rafla.py -HC 7 --cnf2file test.cnf --var2file test.var
+# create CNF and variables file
 
 cadical test.cnf --no-binary test.cnf.proof -t 1 -q 
 # create partial proof, "-t 1" termination after 1 second, "-q" for quiet mode
 
-python satify/verify.py test.cnf test.cnf.proof merge.inccnf
+python satify/verify.py test.cnf test.cnf.proof test_verification.inccnf --var test.var
 # creates an incremental cnf by appending all learned clauses from the proof to the original cnf
 
 cadical merge.inccnf -q
