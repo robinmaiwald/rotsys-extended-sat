@@ -21,7 +21,7 @@ parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove ass
 parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane Hamiltonian cycle")
 
 parser.add_argument("-r2f","--rs2file", help="if specified, export rotation systems to this file")
-parser.add_argument("-c2f","--cnf2file", help="if specified, export CNF to this file")
+parser.add_argument("-c2f","--cnf2file", default="test.cnf", help="if specified, export CNF to this file")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 parser.add_argument("--debug","-d",type=int,default=0,help="debug level")
 
@@ -139,6 +139,18 @@ if 1:
 	        +var_ab_cross_cd_directed[a,b,c,d]])
 
 
+def forbid_planar_subgraph(edges):
+    return [[+var_ab_cross_cd[a,b,c,d] for (a,b),(c,d) in combinations(edges,2) if len({a,b,c,d}) == 4]]
+
+def assert_planar_subgraph(edges):
+    return [[-var_ab_cross_cd[a,b,c,d]] for (a,b),(c,d) in combinations(edges,2) if len({a,b,c,d}) == 4]
+
+if args.forbidHC:
+    print ("(HC) there is no plane Hamiltonian cycle",len(constraints))
+    for perm in permutations(N):
+        if perm[0] == 0 and perm[1] < perm[-1]: # wlog
+            constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in N])
+
 
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
@@ -152,7 +164,7 @@ if args.cnf2file:
     cnf = CNF()
     for c in constraints: cnf.append(c)
     cnf.to_file(args.cnf2file)
-    exit()
+    #exit()
 
 
 outfile = None
