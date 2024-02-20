@@ -57,18 +57,22 @@ if args.natural:
         constraints.append([var_rotsys[0,a,a+1]])
 
 
+# creates clauses to ensure exactly one of the given literals is true
+def exactly_one_clauses(literals):
+	return [literals]+[[-l1,-l2] for l1,l2 in combinations(literals,2)]
+
 print ("(*) assert permutations",len(constraints))
 for a in N:
     for i in N_without_last:
-        constraints.append([var_rotsys[a,i,b] for b in N_without[a]])
-        for b1,b2 in combinations(N_without[a],2):
-            constraints.append([-var_rotsys[a,i,b1],-var_rotsys[a,i,b2]])
+        constraints += exactly_one_clauses([var_rotsys[a,i,b] for b in N_without[a]])
 
     for b in N_without[a]:
-        constraints.append([var_rotsys[a,i,b] for i in N_without_last])
-        for i1,i2 in combinations(N_without_last,2):
-            constraints.append([-var_rotsys[a,i1,b],-var_rotsys[a,i2,b]])
+        constraints += exactly_one_clauses([var_rotsys[a,i,b] for i in N_without_last])
 
+
+# ensure both variables have the same value (logical XNOR)
+def equality_clauses(a,b):
+	return [[-a,+b],[+a,-b]]
 
 print ("(*) assert a_sees_bcd",len(constraints))
 for a in N:
@@ -76,14 +80,18 @@ for a in N:
         for x,y,z in permutations([b,c,d]):
             inversions = sum(+1 for u,v in combinations([x,y,z],2) if u>v)
             sign = (-1)**inversions
-            constraints.append([-var_a_sees_bcd[a,b,c,d],+sign*var_a_sees_bcd[a,x,y,z]])
-            constraints.append([+var_a_sees_bcd[a,b,c,d],-sign*var_a_sees_bcd[a,x,y,z]])
+            constraints += equality_clauses(+var_a_sees_bcd[a,b,c,d],+sign*var_a_sees_bcd[a,x,y,z])
+
+
+# if all if_literals are fulfilled, then all then_literals must be fulfilled
+def if_then_clauses(if_literals,then_literals):
+	return [[-i for i in if_literals]+[t] for t in then_literals]
 
 
 print ("(*) assert a_sees_bcd",len(constraints))
 for a,b,c,d in permutations(N,4):
     for i,j,k in combinations(N_without_last,3):
-        constraints.append([-var_rotsys[a,i,b],-var_rotsys[a,j,c],-var_rotsys[a,k,d],+var_a_sees_bcd[a,b,c,d]])
+        constraints += if_then_clauses([+var_rotsys[a,i,b],+var_rotsys[a,j,c],+var_rotsys[a,k,d]],[+var_a_sees_bcd[a,b,c,d]])
 
 
 def forbid_subrs(subrs):
@@ -107,27 +115,28 @@ if args.valid5tuples:
     constraints += forbid_subrs(
         [[1,2,3,4],[0,2,4,3],[0,3,1,4],[0,4,2,1],[0,1,3,2]]) # forbidden type II
 
+
+# literal A is fulfilled if and only if at least one B are fulfilled 
+def A_equals_disjunctionB_clauses(A_literal,B_literals):
+	return [[-A_literal]+B_literals]+[[+A_literal,-b] for b in B_literals]
+
+# literal A is fulfilled if and only if all B's are fulfilled 
+def A_equals_conjunctionB_clauses(A_literal,B_literals):
+	return [[-A_literal,+b] for b in B_literals]+[[+A_literal]+[-b for b in B_literals]]
+
 if 1:
 	print ("(*) assert ab_cross_cd",len(constraints))
 	for a,b,c,d in permutations(N,4):
-	    constraints.append([
-	        -var_a_sees_bcd[a,b,d,c],
-	        -var_a_sees_bcd[b,a,c,d],
-	        -var_a_sees_bcd[c,a,b,d],
-	        -var_a_sees_bcd[d,a,c,b],+var_ab_cross_cd_directed[a,b,c,d]])
-	    constraints.append([
-	        +var_a_sees_bcd[a,b,d,c],-var_ab_cross_cd_directed[a,b,c,d]])
-	    constraints.append([
-	        +var_a_sees_bcd[b,a,c,d],-var_ab_cross_cd_directed[a,b,c,d]])
-	    constraints.append([
-	        +var_a_sees_bcd[c,a,b,d],-var_ab_cross_cd_directed[a,b,c,d]])
-	    constraints.append([
-	        +var_a_sees_bcd[d,a,c,b],-var_ab_cross_cd_directed[a,b,c,d]])
 
-	    constraints.append([-var_ab_cross_cd_directed[a,b,c,d],+var_ab_cross_cd[a,b,c,d]])
-	    constraints.append([-var_ab_cross_cd_directed[a,b,d,c],+var_ab_cross_cd[a,b,c,d]]) 
-	    constraints.append([+var_ab_cross_cd_directed[a,b,c,d],+var_ab_cross_cd_directed[a,b,d,c],-var_ab_cross_cd[a,b,c,d]])
+	    constraints += A_equals_conjunctionB_clauses(+var_ab_cross_cd_directed[a,b,c,d],[
+	    	+var_a_sees_bcd[a,b,d,c],
+	        +var_a_sees_bcd[b,a,c,d],
+	        +var_a_sees_bcd[c,a,b,d],
+	        +var_a_sees_bcd[d,a,c,b]])
 
+	    constraints += A_equals_disjunctionB_clauses(+var_ab_cross_cd[a,b,c,d],[
+	    	+var_ab_cross_cd_directed[a,b,c,d],
+	        +var_ab_cross_cd_directed[a,b,c,d]])
 
 
 
