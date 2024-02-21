@@ -219,9 +219,10 @@ if 1:
             #constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
             #                                             [-var_ab_cross_cd[a,b,c,d] for (a,b),(c,d) in combinations(edges,2) 
             #                                              if len({a,b,c,d}) == 4])
-            if 0:
+            if 1:
                 if k == 4: 
-                    constraints += equality_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], var_ab_cross_cd[I[0],I[1],I[2], I[3]])
+                    constraints += equality_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]],
+                                                    -var_ab_cross_cd[I[0],I[1],I[2], I[3]])
                 if k > 4:
                     constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
                                                             [var_plane_ab_I_path[I[0],I[-2],I[1:-2]]] +
@@ -229,7 +230,7 @@ if 1:
                     constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
                                                             [var_plane_ab_I_path[I[1],I[-1],I[2:-1]]] +
                                                             [-var_ab_cross_cd[I[i], I[i+1],I[0],I[1]] for i in range(2,len(I)-1)])
-            if 1:
+            if 0:
                 if k == 3: 
                     constraints += [var_plane_ab_I_path[I[0],I[-1],I[1:-1]]]
                 if k > 3:
