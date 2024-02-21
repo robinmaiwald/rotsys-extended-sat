@@ -69,8 +69,7 @@ def dcross(a,b,c,d):
 var_ab_cross_cd = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 var_ab_cross_cd_directed = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 
-var_plane_ab_I_path = {(I[0],I[-1],I[1:-1]): vpool.id() for k in range(3,n+1) 
-                       for I in permutations(set(N),k)}
+var_plane_ab_I_path = {(I[0],I[-1],I[1:-1]): vpool.id() for k in range(3,n+1) for I in permutations(set(N),k)}
 
 if 0:
     var_plane_0x_I_path_ordered = {(x,I): vpool.id() for x in set(N) - {0} #for k in range(2,n) 
@@ -211,7 +210,8 @@ if 0:
         for I in combinations(set(N)-{0,x},n//2-1):
             constraints += A_equals_disjunctionB_clauses(var_plane_0x_I_path_unordered[x,I],
                                                          [var_plane_0x_I_path_ordered[x,J] for J in permutations(I)])
-if 1: 
+
+if 0: 
     print ("plane path from a to b using vertices I",len(constraints))
     for k in range(4,n+1):
         for I in permutations(N,k):
@@ -219,7 +219,7 @@ if 1:
             #constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
             #                                             [-var_ab_cross_cd[a,b,c,d] for (a,b),(c,d) in combinations(edges,2) 
             #                                              if len({a,b,c,d}) == 4])
-            if 1:
+            if 0:
                 if k == 4: 
                     constraints += equality_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]],
                                                     -var_ab_cross_cd[I[0],I[1],I[2], I[3]])
@@ -230,7 +230,14 @@ if 1:
                     constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
                                                             [var_plane_ab_I_path[I[1],I[-1],I[2:-1]]] +
                                                             [-var_ab_cross_cd[I[i], I[i+1],I[0],I[1]] for i in range(2,len(I)-1)])
-            if 0:
+                if 0:
+                    for a in range(k):
+                        for b in range(a+4,k):
+                            J = I[a:b] # subpath
+                            assert(len(J) >= 4) 
+                            constraints.append([-var_plane_ab_I_path[I[0],I[-1],I[1:-1]],var_plane_ab_I_path[J[0],J[-1],J[1:-1]]])
+
+            if 1:
                 if k == 3: 
                     constraints += [var_plane_ab_I_path[I[0],I[-1],I[1:-1]]]
                 if k > 3:
@@ -247,7 +254,7 @@ if args.forbidHC:
     for perm in permutations(N):
         if perm[0] == 0 and perm[1] < perm[-1]: # wlog
             constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in N])
-            if 1:
+            if 0:
                 constraints.append([-var_plane_ab_I_path[perm[0],perm[-1],perm[1:-1]]] + [var_ab_cross_cd[perm[0],perm[-1],perm[i],perm[i+1]] for i in  range(1,n-2)])
             
 

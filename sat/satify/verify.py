@@ -13,14 +13,14 @@ args = parser.parse_args()
 print("args",args)
 
 
-print("read cnf from {args.cnffile}")
+print(f"read cnf from {args.cnf}")
 cnf = readcnf(args.cnf)
 
-print("read proof from {args.prooffile}")
+print(f"read proof from {args.proof}")
 proof = readproof(args.proof)
 
 if args.var:
-	print("read variables from {args.var}")
+	print(f"read variables from {args.var}")
 	var = literal_eval(open(args.var).readline())
 else:
 	var = {}
@@ -33,7 +33,7 @@ def var_lookup(x):
 	else:
 		return s+'unnamed'+str(a)
 
-print("write verification inccnf to {args.merge}.")
+print(f"write verification inccnf to {args.merge}")
 print("for each clause a cube is created.")
 print("cadical should return 'UNSAT' for all cubes (i.e. learned clauses are correct)")
 
