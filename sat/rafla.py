@@ -19,6 +19,7 @@ parser.add_argument("-v4","--valid4tuples",action='store_false',help="remove ass
 parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove assumption that 5-tuples are valid (enabled by default, use parameter to disable)")
 
 parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane Hamiltonian cycle")
+parser.add_argument("-HP","--forbidHP",action='store_true', help="forbid plane Hamiltonian path")
 
 parser.add_argument("-or","--rs2file", help="if specified, export rotation systems to this file")
 parser.add_argument("-oc","--cnf2file", help="if specified, export CNF to this file")
@@ -68,6 +69,15 @@ def dcross(a,b,c,d):
 var_ab_cross_cd = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 var_ab_cross_cd_directed = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 
+var_plane_ab_I_path = {(I[0],I[-1],I[1:-1]): vpool.id() for k in range(4,n+1) 
+                       for I in permutations(set(N),k)}
+
+if 0:
+    var_plane_0x_I_path_ordered = {(x,I): vpool.id() for x in set(N) - {0} #for k in range(2,n) 
+                        for I in permutations(set(N)-{0,x},n//2-1)}
+
+    var_plane_0x_I_path_unordered = {(x,I): vpool.id() for x in set(N) - {0} #for k in range(2,n) 
+                        for I in combinations(set(N)-{0,x},n//2-1)}
 
 # ensure both variables have the same value (logical XNOR)
 def equality_clauses(a,b):
@@ -190,12 +200,68 @@ def forbid_planar_subgraph(edges):
 def assert_planar_subgraph(edges):
     return [[-var_ab_cross_cd[a,b,c,d]] for (a,b),(c,d) in combinations(edges,2) if len({a,b,c,d}) == 4]
 
+if 0: 
+    print ("plane path from a to b using vertices I",len(constraints))
+    for x in range(1,n):
+        for I in permutations(set(N)-{0,x},n//2-1):
+            path = (0,)+I+(x,)
+            edges = [(path[i],path[i+1]) for i in range(len(path)-1)]
+            constraints += A_equals_conjunctionB_clauses(var_plane_0x_I_path_ordered[x,I], 
+                                                         [-var_ab_cross_cd[a,b,c,d] for (a,b),(c,d) in combinations(edges,2) if len({a,b,c,d}) == 4])
+        for I in combinations(set(N)-{0,x},n//2-1):
+            constraints += A_equals_disjunctionB_clauses(var_plane_0x_I_path_unordered[x,I],
+                                                         [var_plane_0x_I_path_ordered[x,J] for J in permutations(I)])
+if 1: 
+    print ("plane path from a to b using vertices I",len(constraints))
+    for k in range(4,n+1):
+        for I in permutations(N,k):
+            edges = [(I[i],I[i+1]) for i in range(len(I)-1)]
+            #constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
+            #                                             [-var_ab_cross_cd[a,b,c,d] for (a,b),(c,d) in combinations(edges,2) 
+            #                                              if len({a,b,c,d}) == 4])
+            if k == 4: 
+                constraints.append([var_plane_ab_I_path[I[0],I[-1],I[1:-1]]])
+            if k > 4:
+                constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
+                                                         [var_plane_ab_I_path[I[0],I[-2],I[1:-2]]] +
+                                                         [-var_ab_cross_cd[I[i], I[i+1],I[-2],I[-1]] for i in range(len(I)-3)])
+                constraints += A_equals_conjunctionB_clauses(var_plane_ab_I_path[I[0],I[-1],I[1:-1]], 
+                                                         [var_plane_ab_I_path[I[1],I[-1],I[2:-1]]] +
+                                                         [-var_ab_cross_cd[I[i], I[i+1],I[0],I[1]] for i in range(2,len(I)-1)])
+    
+
 if args.forbidHC:
     print ("(HC) there is no plane Hamiltonian cycle",len(constraints))
     for perm in permutations(N):
         if perm[0] == 0 and perm[1] < perm[-1]: # wlog
             constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in N])
+            if 1:
+                constraints.append([-var_plane_ab_I_path[perm[0],perm[-1],perm[1:-1]]] + [var_ab_cross_cd[perm[0],perm[-1],perm[i],perm[i+1]] for i in  range(1,n-2)])
+            
 
+if args.forbidHP:
+    print ("(HP) there is no plane Hamiltonian path",len(constraints))
+    for perm in permutations(N):
+        if perm[0] < perm[-1]: # wlog
+            constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in range(1,n)])
+            
+            
+if 0:
+    print ("(HC) there is no plane Hamiltonian cycle - but in a smart way",len(constraints))
+    for perm in permutations(N):
+        if perm[0] == 0 and perm[1] < perm[-1]: # wlog
+            x = perm[n//2]
+            I = tuple(sorted(perm[1:n//2]))
+            J = tuple(sorted(set(N)-{0,x}-set(I)))
+            for C in forbid_planar_subgraph([(perm[i-1],perm[i]) for i in N]):
+                constraints.append([-var_plane_0x_I_path_unordered[x,I], 
+                                    -var_plane_0x_I_path_unordered[x,J]]+C)
+
+if 0:    
+    for x in range(1,n):
+        for I in combinations(set(N)-{0,x},n//2-1):
+            J = tuple(sorted(set(N)-{0,x}-set(I)))
+            constraints.append([-var_plane_0x_I_path_unordered[x,I], -var_plane_0x_I_path_unordered[x,J]])
 
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
