@@ -2,6 +2,13 @@
 from basics import *
 #from pysat.formula import IDPool, CNF
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("cnf",type=str,help="cnf input file")
+parser.add_argument("--output","-o",type=str,help="cnf output file")
+
+args = parser.parse_args()
+print("args",args)
 
 def unit_propagate(cnf):
 	units = [c[0] for c in cnf if len(c) == 1]

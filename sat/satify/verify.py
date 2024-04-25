@@ -25,13 +25,16 @@ if args.var:
 else:
 	var = {}
 
-def var_lookup(x):
+
+def var_lookup(x,unnamed=None):
 	s = '+' if x > 0 else '-'
 	a = abs(x)
 	if a in var:
 		return s+var[a]
-	else:
+	elif unnamed:
 		return s+'unnamed'+str(a)
+	else:
+		return None
 
 print(f"write verification inccnf to {args.merge}")
 print("for each clause a cube is created.")
@@ -44,12 +47,17 @@ with open(args.merge,"w") as inccnf:
 	for c in cnf:
 		inccnf.write(" ".join(str(x) for x in c)+" 0\n")
 
-	for c in proof:
-		if args.debug >= 2: 
-			c_text = [var_lookup(x) for x in c]
-			print(f"learned clause: {c} {c_text}")
-
+	for i,c in enumerate(proof):
 		l = len(c)
+
+		if args.debug >= 2: 
+			#var = {x:var[x] for x in var if var[x][0] == 'S'}
+			c_text = [var_lookup(x) for x in c]
+			if None not in c_text:
+				symbols = set(''.join(x[1:] for x in c_text))
+				if 'S' in symbols and 'C' in symbols and l <= 6:
+					print(f"learned clause #{i}: {c} {c_text} ")
+
 		if l == 2:
 			inccnf.write("a "+" ".join(str(-x) for x in c)+" 0\n")
 
@@ -57,7 +65,7 @@ with open(args.merge,"w") as inccnf:
 		if l not in stats: stats[l] = 0
 		stats[l] += 1
 
-
+	print(f"total leanerd: {i}")
 
 if args.debug: 
 	print("stats",{i:stats[i] for i in sorted(stats)})

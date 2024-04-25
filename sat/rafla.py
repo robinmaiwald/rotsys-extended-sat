@@ -80,28 +80,28 @@ if 0:
 
 # ensure both variables have the same value (logical XNOR)
 def equality_clauses(a,b):
-	return [[-a,+b],[+a,-b]]
-	
+    return [[-a,+b],[+a,-b]]
+    
 # creates clauses to ensure exactly one of the given literals is true
 def exactly_one_clauses(literals):
-	return [literals]+[[-l1,-l2] for l1,l2 in combinations(literals,2)]
-	
+    return [literals]+[[-l1,-l2] for l1,l2 in combinations(literals,2)]
+    
 # creates clauses to ensure exactly one of the given literals is true
 def at_most_one_clauses(literals):
-	return [[-l1,-l2] for l1,l2 in combinations(literals,2)]
-	
+    return [[-l1,-l2] for l1,l2 in combinations(literals,2)]
+    
 # if all if_literals are fulfilled, then all then_literals must be fulfilled
 def if_then_clauses(if_literals,then_literals):
-	return [[-i for i in if_literals]+[t] for t in then_literals]
+    return [[-i for i in if_literals]+[t] for t in then_literals]
 
 
 # literal A is fulfilled if and only if at least one B are fulfilled 
 def A_equals_disjunctionB_clauses(A_literal,B_literals):
-	return [[-A_literal]+B_literals]+[[+A_literal,-b] for b in B_literals]
+    return [[-A_literal]+B_literals]+[[+A_literal,-b] for b in B_literals]
 
 # literal A is fulfilled if and only if all B's are fulfilled 
 def A_equals_conjunctionB_clauses(A_literal,B_literals):
-	return [[-A_literal,+b] for b in B_literals]+[[+A_literal]+[-b for b in B_literals]]
+    return [[-A_literal,+b] for b in B_literals]+[[+A_literal]+[-b for b in B_literals]]
 
 if args.use_rs:
     print ("(*) wlog: first column is 1,0,0,...,0")
@@ -140,18 +140,31 @@ if args.use_rs:
         for i,j,k in combinations(N_without_last,3):
             constraints += if_then_clauses([+var_rotsys[a,i,b],+var_rotsys[a,j,c],+var_rotsys[a,k,d]],[+var_a_sees_bcd[a,b,c,d]])
 
-if 1:            
+
+if 0:
     print ("(*) assert a_sees_bcd",len(constraints))
     for x in N: # for every element we have a cyclic order which is encoded through forbidden patterns on 4-element subsets
         for a,b,c,d in combinations(N_without[x],4):
             #triples = list(J for J in combinations(I,3))
             for s1,s2,s3,s4 in [[+1,-1,+1,-1],[-1,+1,-1,+1],[+1,-1,-1,-1],[-1,+1,-1,-1],[-1,-1,+1,-1],[-1,-1,-1,+1],[-1,+1,+1,+1],[+1,-1,+1,+1],[+1,+1,-1,+1],[+1,+1,+1,-1]]:
-                constraints.append( [s1*var_a_sees_bcd[x,a,b,c],s2*var_a_sees_bcd[x,a,b,d],s3*var_a_sees_bcd[x,a,c,d],s4*var_a_sees_bcd[x,b,c,d]])
+                constraints.append([s1*var_a_sees_bcd[x,a,b,c],s2*var_a_sees_bcd[x,a,b,d],s3*var_a_sees_bcd[x,a,c,d],s4*var_a_sees_bcd[x,b,c,d]])
     
-    if args.natural:
-        for a,b,c in combinations(N_without[0],3):
-            constraints.append([var_a_sees_bcd[0,a,b,c]])
-        
+
+if 1:
+    print ("(*) assert a_sees_bcd",len(constraints))
+    for x in N: # for every element we have a cyclic order which is encoded through forbidden patterns on 4-element subsets
+        for a,b,c,d in combinations(N_without[x],4):
+            for s in [+1,-1]:
+                constraints.append([+s*var_a_sees_bcd[x,a,b,c],-s*var_a_sees_bcd[x,a,b,d],+s*var_a_sees_bcd[x,a,c,d]]) # no 4=bcd
+                constraints.append([+s*var_a_sees_bcd[x,a,b,d],-s*var_a_sees_bcd[x,a,c,d],+s*var_a_sees_bcd[x,b,c,d]]) # no 1=abc
+                constraints.append([-s*var_a_sees_bcd[x,a,b,c],-s*var_a_sees_bcd[x,a,c,d],+s*var_a_sees_bcd[x,b,c,d]]) # no 2=abd
+                constraints.append([+s*var_a_sees_bcd[x,a,b,c],-s*var_a_sees_bcd[x,a,b,d],-s*var_a_sees_bcd[x,b,c,d]]) # no 3=acd
+            
+
+if args.natural:
+    for a,b,c in combinations(N_without[0],3):
+        constraints.append([var_a_sees_bcd[0,a,b,c]])
+    
 
 
 def forbid_subrs(subrs):
@@ -176,21 +189,27 @@ if args.valid5tuples:
         [[1,2,3,4],[0,2,4,3],[0,3,1,4],[0,4,2,1],[0,1,3,2]]) # forbidden type II
 
 if 1:
-	print ("(*) assert ab_cross_cd",len(constraints))
-	for a,b,c,d in permutations(N,4):
+    print ("(*) assert ab_cross_cd",len(constraints))
+    for a,b,c,d in permutations(N,4):
 
-	    constraints += A_equals_conjunctionB_clauses(+var_ab_cross_cd_directed[a,b,c,d],[
-	    	+var_a_sees_bcd[a,b,d,c],
-	        +var_a_sees_bcd[b,a,c,d],
-	        +var_a_sees_bcd[c,a,b,d],
-	        +var_a_sees_bcd[d,a,c,b]])
+        constraints += A_equals_conjunctionB_clauses(+var_ab_cross_cd_directed[a,b,c,d],[
+            +var_a_sees_bcd[a,b,d,c],
+            +var_a_sees_bcd[b,a,c,d],
+            +var_a_sees_bcd[c,a,b,d],
+            +var_a_sees_bcd[d,a,c,b]])
 
-	    constraints += A_equals_disjunctionB_clauses(+var_ab_cross_cd[a,b,c,d],[
-	    	+var_ab_cross_cd_directed[a,b,c,d],
-	        +var_ab_cross_cd_directed[a,b,d,c]])
+        constraints += A_equals_disjunctionB_clauses(+var_ab_cross_cd[a,b,c,d],[
+            +var_ab_cross_cd_directed[a,b,c,d],
+            +var_ab_cross_cd_directed[a,b,d,c]])
         
-	    constraints += at_most_one_clauses([+var_ab_cross_cd_directed[a,b,c,d],
-	    	+var_ab_cross_cd_directed[a,b,d,c]])
+        constraints += at_most_one_clauses([+var_ab_cross_cd_directed[a,b,c,d],
+            +var_ab_cross_cd_directed[a,b,d,c]])
+
+
+        # clauses learned:
+        #constraints += at_most_one_clauses([+var_ab_cross_cd_directed[a,b,c,d],+var_ab_cross_cd[a,c,b,d]])
+        #constraints += at_most_one_clauses([+var_ab_cross_cd[a,b,c,d],+var_ab_cross_cd[a,c,b,d]])
+        #constraints.append([-var_ab_cross_cd[a,b,c,d],+var_a_sees_bcd[d,a,b,c],+var_a_sees_bcd[b,a,c,d]])
 
 
 def forbid_planar_subgraph(edges):
@@ -348,6 +367,7 @@ if True:
 
                 rs.append(order_a)
         else:
+            # read rotation system from triple orientations of cyclic orders
             for x in N:
                 y = min(N_without[x])
                 order_x = [y]
