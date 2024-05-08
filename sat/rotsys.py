@@ -21,7 +21,6 @@ parser.add_argument("-cm","--cmonotone",action='store_true', help="assume circul
 parser.add_argument("-scm","--stronglycmonotone",action='store_true', help="assume strongly circularly monotone")
 parser.add_argument("-gt","--gtwisted",action='store_true', help="restrict to generalized twisted") 
 
-
 parser.add_argument("-nat","--natural",action='store_false',help="remove assumption that first line needs not to be 2,3,...,n (enabled by default, use parameter to disable)")
 parser.add_argument("-v4","--valid4tuples",action='store_false',help="remove assumption that 4-tuples are valid (enabled by default, use parameter to disable)")
 parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove assumption that 5-tuples are valid (enabled by default, use parameter to disable)")
@@ -34,7 +33,7 @@ parser.add_argument("-HPe","--forbidHPedge",action='store_true', help="assume th
 
 parser.add_argument("-HT+","--HoffmannTothplus",type=int, help="check strengthened Hoffmann-Toth property")
 
-parser.add_argument("--forbidHPjoachim",action='store_true', help="assume that for a pair of vertices there is no plane Hamiltonian path (joachim's conjecture)")
+parser.add_argument("--forbidAllPairsHP",action='store_true', help="assume that for a pair of vertices there is no plane Hamiltonian path")
 
 parser.add_argument("--emptycycles",type=int,help="forbid empty cycles of specified size")
 
@@ -498,9 +497,9 @@ if args.HoffmannTothplus:
 
 
 
-if args.forbidHPjoachim:
+if args.forbidAllPairsHP:
     assert(not args.lexmin)
-    print ("(HPj) assume that for a pair of vertices there is no plane Hamiltonian path (joachim's conjecture); wlog for uv=01",len(constraints))
+    print ("(HPj) assume that for a pair of vertices there is no plane Hamiltonian path; wlog for uv=01",len(constraints))
     for perm in permutations(N):
         if perm[0] == 0 and perm[-1] == 1:
             constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in range(1,n)])
