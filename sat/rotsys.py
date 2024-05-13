@@ -13,6 +13,8 @@ import datetime
 from pysat.formula import IDPool,CNF
 from pysat.card import *
 
+
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("n",type=int,help="number of elements")
@@ -62,11 +64,16 @@ parser.add_argument("--use_rs_vars","-R",action='store_true', help="use variable
 
 parser.add_argument("-r2f","--rs2file", help="if specified, export rotation systems to this file")
 parser.add_argument("-c2f","--cnf2file", help="if specified, export CNF to this file")
+parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 
 
 
 args = parser.parse_args()
 print("args",args)
+
+
+
+
 
 #vargs = vars(args)
 #print("c\tactive args:",{x:vargs[x] for x in vargs if vargs[x] != None and vargs[x] != False})
@@ -652,31 +659,43 @@ if args.cnf2file:
     cnf = CNF()
     for c in constraints: cnf.append(c)
     cnf.to_file(args.cnf2file)
-    exit()
+
+else:
+
+    outfile = None
+    if args.rs2file:
+        print ("write rotation systems to file:",args.rs2file)
+        outfile = open(args.rs2file,"w")
 
 
 
-outfile = None
-if args.rs2file:
-    print ("write rotation systems to file:",args.rs2file)
-    outfile = open(args.rs2file,"w")
+    ct = 0
+    found = []
 
+    if args.solver == "cadical":
+        try:
+            from pysat.solvers import Cadical153    
+            solver = Cadical153(bootstrap_with=constraints)
+        except ImportError:
+            from pysat.solvers import Cadical # old pysat versions
+            solver = Cadical(bootstrap_with=constraints)
 
-
-ct = 0
-found = []
-
-if True:
-    try:
-        from pysat.solvers import Cadical153    
-        solver = Cadical153(bootstrap_with=constraints)
-    except ImportError:
-        from pysat.solvers import Cadical # old pysat versions
-        solver = Cadical(bootstrap_with=constraints)
-
+    else:
+        import pycosat
 
     print (datetime.datetime.now(),"start solving")
-    for sol in solver.enum_models():
+
+    #for sol in solver.enum_models(): 
+    # remark: since one-to-one correspondence between solutions of CNF and rotation systems does not work for cmonotone,
+    # we decided to incrementally add clauses to prevent previous solutions
+    while True:
+        if args.solver == "cadical":
+            if not solver.solve(): break
+            sol = solver.get_model()
+        else:
+            sol = pycosat.solve(constraints)
+            if sol == "UNSAT": break
+            
         ct += 1
         sol = set(sol) # it's faster to lookup values in set than in list
 
@@ -718,7 +737,20 @@ if True:
         if outfile: outfile.write(str(rs)+"\n")
         print (datetime.datetime.now(),"solution #",ct,"\t",rs)    
 
-        if not args.all: break
+        if not args.all: 
+            break
+        else:
+            # clause to prevent solution
+            C = []
+            for a in N:
+                for b,c,d in combinations(N_without[a],3):
+                    if b != N_without[a][0]: continue # this is sufficient  
+                    v = var_a_sees_bcd(a,b,c,d)
+                    C.append(v*(-1 if v in sol else +1))
+            if args.solver == "cadical":
+                solver.add_clause(C)
+            else:
+                constraints.append(C)
 
 
 
