@@ -62,7 +62,6 @@ parser.add_argument("--use_rs_vars","-R",action='store_true', help="use variable
 
 parser.add_argument("-r2f","--rs2file", help="if specified, export rotation systems to this file")
 parser.add_argument("-c2f","--cnf2file", help="if specified, export CNF to this file")
-parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 
 
 
@@ -668,25 +667,16 @@ ct = 0
 found = []
 
 if True:
-    if args.solver == "cadical":
-        print ("use pysat/Cadical")
-        try:
-            from pysat.solvers import Cadical153    
-            solver = Cadical153()
-        except ImportError:
-            from pysat.solvers import Cadical # old pysat versions
-            solver = Cadical()
-
-        for c in constraints: solver.add_clause(c)
-        solution_iterator = solver.enum_models()
-    else:
-        print ("use pycosat")
-        import pycosat
-        solution_iterator = pycosat.itersolve(constraints)
+    try:
+        from pysat.solvers import Cadical153    
+        solver = Cadical153(bootstrap_with=constraints)
+    except ImportError:
+        from pysat.solvers import Cadical # old pysat versions
+        solver = Cadical(bootstrap_with=constraints)
 
 
     print (datetime.datetime.now(),"start solving")
-    for sol in solution_iterator:
+    for sol in solver.enum_models():
         ct += 1
         sol = set(sol) # it's faster to lookup values in set than in list
 
