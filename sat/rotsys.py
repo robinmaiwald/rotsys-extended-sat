@@ -10,6 +10,9 @@ from itertools import combinations, permutations, product
 from ast import literal_eval
 import datetime
 
+from pysat.formula import IDPool,CNF
+from pysat.card import *
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("n",type=int,help="number of elements")
@@ -83,14 +86,20 @@ n = args.n
 N = list(range(n))
 
 N_without_last = list(range(n-1))
-N_without = {i:list(range(i))+list(range(i+1,n)) for i in N}
+N_without = {i:[j for j in N if j!=i] for i in N}
 
-from pysat.formula import IDPool,CNF
-from pysat.card import *
+if args.cmonotone or args.stronglycmonotone:
+    # vertices 0 and 1 are used to ensure c-monotonicity
+    all_vertices = list(range(n+2)) # use two auxiliary vertices for the encoding
+else:
+    all_vertices = N
+
+all_vertices_without = {i:[j for j in all_vertices if j!=i] for i in all_vertices} 
+
+
 
 vpool = IDPool()
 constraints = []
-
 
 
 # Remark: we declare all boolean variables to prevent the usage of faulty variables in the encoding
@@ -103,12 +112,11 @@ if args.use_rs_vars:
 var_a_sees_bcd_ = {}
 def var_a_sees_bcd(*I): return var_a_sees_bcd_[I]
 # b is the i-th vertex in cyclic order around vertex a
-for a in N:
-    for b,c,d in combinations(N_without[a],3):
+for a in all_vertices: # remark: using "all_vertices" instead of "N" because for cmonotone there are auxiliary vertices
+    for b,c,d in combinations(all_vertices_without[a],3): 
         var_a_sees_bcd_[a,b,c,d] = var_a_sees_bcd_[a,c,d,b] = var_a_sees_bcd_[a,d,b,c] = vpool.id(f"S{a}{b}{c}{d}")
         var_a_sees_bcd_[a,b,d,c] = var_a_sees_bcd_[a,c,b,d] = var_a_sees_bcd_[a,d,c,b] = -var_a_sees_bcd_[a,b,c,d]
         
-
 
 def cross(a,b,c,d):
     if a>b: return cross(b,a,c,d)
@@ -121,8 +129,8 @@ def dcross(a,b,c,d):
     a,b,c,d = min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
     return vpool.id(f"D{a}{b}{c}{d}")
 
-var_ab_cross_cd_ = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(N,4)}
-var_ab_cross_cd_directed_ = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(N,4)}
+var_ab_cross_cd_ = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
+var_ab_cross_cd_directed_ = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
 
 def var_ab_cross_cd(*I): return var_ab_cross_cd_[I]
 def var_ab_cross_cd_directed(*I): return var_ab_cross_cd_directed_[I]
@@ -164,8 +172,8 @@ if use_emptytriangle_variables:
 ## CONSTRAINTS
 
 print ("(*) assert a_sees_bcd",len(constraints))
-for x in N: # for every element we have a cyclic order which is encoded through forbidden patterns on 4-element subsets
-    for a,b,c,d in combinations(N_without[x],4):
+for x in all_vertices: # for every element we have a cyclic order which is encoded through forbidden patterns on 4-element subsets
+    for a,b,c,d in combinations(all_vertices_without[x],4): # remark: using "all_vertices" instead of "N" because for cmonotone there are auxiliary vertices
         for s in [+1,-1]:
             constraints.append([+s*var_a_sees_bcd(x,a,b,c),-s*var_a_sees_bcd(x,a,b,d),+s*var_a_sees_bcd(x,a,c,d)]) # no 4=bcd
             constraints.append([+s*var_a_sees_bcd(x,a,b,d),-s*var_a_sees_bcd(x,a,c,d),+s*var_a_sees_bcd(x,b,c,d)]) # no 1=abc
@@ -220,28 +228,26 @@ for a in N:
 
 
 ## FORBID NON-REALIZABLE PRE-RS
-
-def forbid_subrs(subrs):
+def forbid_subrs(subrs,vertex_set=N):
     k = len(subrs)
     constraints = []
-    for I in permutations(N,k):
+    for I in permutations(vertex_set,k):
         for s in [+1,-1]: # forbid original and mirrored
             constraints.append([-s*var_a_sees_bcd(I[a],I[b],I[c],I[d]) for a in range(k) for b,c,d in combinations(subrs[a],3)])
     return constraints
 
 
 if args.valid4tuples:
-    print ("(*) assert valid 4-tuples",len(constraints))
+    print ("(*) assert valid 4-tuples",len(constraints)) # remark: also affects auxiliary vertices
     constraints += forbid_subrs(
-        [[1,2,3],[0,2,3],[0,1,3],[0,2,1]])
-
+        [[1,2,3],[0,2,3],[0,1,3],[0,2,1]],vertex_set=all_vertices)
 
 if args.valid5tuples:
-    print ("(*) assert valid 5-tuples")
+    print ("(*) assert valid 5-tuples") # remark: also affects auxiliary vertices
     constraints += forbid_subrs(
-        [[1,2,3,4],[0,2,3,4],[0,3,1,4],[0,4,2,1],[0,3,1,2]]) # forbidden type I
+        [[1,2,3,4],[0,2,3,4],[0,3,1,4],[0,4,2,1],[0,3,1,2]],vertex_set=all_vertices) # forbidden type I
     constraints += forbid_subrs(
-        [[1,2,3,4],[0,2,4,3],[0,3,1,4],[0,4,2,1],[0,1,3,2]]) # forbidden type II
+        [[1,2,3,4],[0,2,4,3],[0,3,1,4],[0,4,2,1],[0,1,3,2]],vertex_set=all_vertices) # forbidden type II
 
 
 ## SUBCLASSES
@@ -269,31 +275,33 @@ if args.gtwisted:
         [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3]]]:
         constraints += forbid_subrs(subrs) 
         
+
 if args.cmonotone or args.stronglycmonotone:
     print("(*) assume cmonotone")
-    assert( not args.lexmin)
-    x = 0 # two vertices to ensure c-monotonicity
-    y = 1
-    I = range(2,n) # proper vertices
-    for a,b in permutations(I,2):
+    x = n # two auxiliary vertices to ensure (strong) c-monotonicity
+    y = n+1
+    assert(set(all_vertices) == set(N)|{x,y}) # others are proper vertices
+    for a,b in permutations(N,2):
         constraints.append([-var_ab_cross_cd(x,a,y,b)])
-    for a,b,c in permutations(I,3):
+    for a,b,c in permutations(N,3):
         constraints.append([-var_ab_cross_cd(x,a,b,c),-var_ab_cross_cd(y,a,b,c)])
 
 
     if args.stronglycmonotone:
         print("(*) assume strongly cmonotone")        
-        X = {(a,b): vpool.id(f'x{a}_{b}') for a,b in permutations(I,2)} # TODO
-        for a in I:
-            constraints.append([X[a,b] for b in set(I)-{a}])
-            for b,c in permutations(set(I)-{a},2):
-                constraints.append([-X[a,b],-var_ab_cross_cd(x,b,a,c)])
-                constraints.append([-X[a,b],-var_ab_cross_cd(y,b,a,c)])
-            #constraints.append([X[a,b]]+[var_ab_cross_cd(x,b,a,c) for b,c in permutations(set(I)-{a},2)]+[var_ab_cross_cd(y,b,a,c) for b,c in permutations(set(I)-{a},2)])
+        for a in N:
+            rest = set(N)-{a}
+            X = {b: vpool.id() for b in rest} # auxiliary variables to make sure the a-star does not wrap around 
+            constraints.append([X[b] for b in rest])
+            for b in rest:
+                for c in rest-{b}:
+                    constraints.append([-X[b],-var_ab_cross_cd(x,b,a,c)])
+                    constraints.append([-X[b],-var_ab_cross_cd(y,b,a,c)])
+                constraints.append([X[b]]+[var_ab_cross_cd(x,b,a,c) for c in rest-{b}]+[var_ab_cross_cd(y,b,a,c) for c in rest-{b}])
 
 
 print ("(*) assert ab_cross_cd",len(constraints))
-for a,b,c,d in permutations(N,4):
+for a,b,c,d in permutations(all_vertices,4):
     constraints.append([
         -var_a_sees_bcd(a,b,d,c),
         -var_a_sees_bcd(b,a,c,d),
@@ -715,7 +723,7 @@ if True:
                     assert(next_found)
                 rs.append(order_x)
         
-        assert(rs not in found)        
+        assert(rs not in found)   
         found.append(rs)
         if outfile: outfile.write(str(rs)+"\n")
         print (datetime.datetime.now(),"solution #",ct,"\t",rs)    
