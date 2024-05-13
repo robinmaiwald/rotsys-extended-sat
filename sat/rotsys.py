@@ -62,8 +62,9 @@ parser.add_argument("-crupp",type=int,help="maximum number of crossings")
 
 parser.add_argument("--use_rs_vars","-R",action='store_true', help="use variables for encoding rotations system via permutations")
 
-parser.add_argument("-r2f","--rs2file", help="if specified, export rotation systems to this file")
-parser.add_argument("-c2f","--cnf2file", help="if specified, export CNF to this file")
+parser.add_argument("-r2f","--rs2file", type=str, help="if specified, export rotation systems to this file")
+parser.add_argument("-c2f","--cnf2file","-o", type=str,help="if specified, export CNF to this file")
+parser.add_argument("-1","--one_to_one",action='store_true', help="one-to-one correspondence between CNF and rotation systems")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 
 
@@ -108,32 +109,33 @@ vpool = IDPool()
 constraints = []
 
 
-# Remark: we declare all boolean variables to prevent the usage of faulty variables in the encoding
-
-if args.use_rs_vars: 
-    # around vertex a, we have b then c then d
-    var_rotsys_ = {(a,i,b):vpool.id(f"R{a}{i}{b}") for a in N for i in N_without_last for b in N_without[a]} 
-    def var_rotsys(*I): return var_rotsys_[I]
         
 var_a_sees_bcd_ = {}
 def var_a_sees_bcd(*I): return var_a_sees_bcd_[I]
 # b is the i-th vertex in cyclic order around vertex a
 for a in all_vertices: # remark: using "all_vertices" instead of "N" because for cmonotone there are auxiliary vertices
     for b,c,d in combinations(all_vertices_without[a],3): 
-        var_a_sees_bcd_[a,b,c,d] = var_a_sees_bcd_[a,c,d,b] = var_a_sees_bcd_[a,d,b,c] = vpool.id(f"S{a}{b}{c}{d}")
+        var_a_sees_bcd_[a,b,c,d] = var_a_sees_bcd_[a,c,d,b] = var_a_sees_bcd_[a,d,b,c] = vpool.id(f"S{a}_{b}_{c}_{d}")
         var_a_sees_bcd_[a,b,d,c] = var_a_sees_bcd_[a,c,b,d] = var_a_sees_bcd_[a,d,c,b] = -var_a_sees_bcd_[a,b,c,d]
         
+
+# Remark: we declare all boolean variables to prevent the usage of faulty variables in the encoding
+if args.use_rs_vars: 
+    # around vertex a, we have b then c then d
+    var_rotsys_ = {(a,i,b):vpool.id(f"R{a}_{i}_{b}") for a in N for i in N_without_last for b in N_without[a]} 
+    def var_rotsys(*I): return var_rotsys_[I]
+
 
 def cross(a,b,c,d):
     if a>b: return cross(b,a,c,d)
     if c>d: return cross(a,b,d,c)
     if a>c: return cross(c,d,a,b)
-    return vpool.id(f"C{a}{b}{c}{d}")
+    return vpool.id(f"C{a}_{b}_{c}_{d}")
 
 
 def dcross(a,b,c,d):
     a,b,c,d = min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
-    return vpool.id(f"D{a}{b}{c}{d}")
+    return vpool.id(f"D{a}_{b}_{c}_{d}")
 
 var_ab_cross_cd_ = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
 var_ab_cross_cd_directed_ = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
@@ -187,6 +189,7 @@ for x in all_vertices: # for every element we have a cyclic order which is encod
             constraints.append([+s*var_a_sees_bcd(x,a,b,c),-s*var_a_sees_bcd(x,a,b,d),-s*var_a_sees_bcd(x,b,c,d)]) # no 3=acd
             
 if args.natural:
+    print ("(*) assert natural",len(constraints))
     for a,b,c in combinations(N_without[0],3):
         constraints.append([var_a_sees_bcd(0,a,b,c)])
 
@@ -220,16 +223,6 @@ if args.use_rs_vars:
         for i,j,k in combinations(N_without_last,3):
             constraints.append([-var_rotsys(a,i,b),-var_rotsys(a,j,c),-var_rotsys(a,k,d),+var_a_sees_bcd(a,b,c,d)])
 
-
-
-print ("(*) assert a_sees_bcd",len(constraints))
-for a in N:
-    for b,c,d in combinations(N_without[a],3):
-        for x,y,z in permutations([b,c,d]):
-            inversions = sum(+1 for u,v in combinations([x,y,z],2) if u>v)
-            sign = (-1)**inversions
-            constraints.append([-var_a_sees_bcd(a,b,c,d),+sign*var_a_sees_bcd(a,x,y,z)])
-            constraints.append([+var_a_sees_bcd(a,b,c,d),-sign*var_a_sees_bcd(a,x,y,z)])
 
 
 
@@ -283,7 +276,8 @@ if args.gtwisted:
         
 
 if args.cmonotone or args.stronglycmonotone:
-    print("(*) assume cmonotone")
+    assert(not args.one_to_one) # does not work due to auxiliary vertices
+    print("(*) assume c-monotone")
     x = n # two auxiliary vertices to ensure (strong) c-monotonicity
     y = n+1
     assert(set(all_vertices) == set(N)|{x,y}) # others are proper vertices
@@ -294,7 +288,7 @@ if args.cmonotone or args.stronglycmonotone:
 
 
     if args.stronglycmonotone:
-        print("(*) assume strongly cmonotone")        
+        print("(*) assume strongly c-monotone")        
         for a in N:
             rest = set(N)-{a}
             X = {b: vpool.id() for b in rest} # auxiliary variables to make sure the a-star does not wrap around 
@@ -643,9 +637,17 @@ if args.forbidT6:
     constraints += forbid_subrs(perfect_twisted(6))
 
 
-
-
-
+"""
+if 0:
+    constraints = []
+    print("fix rotation system")
+    RS = [[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[0,10,11,12,13,14,9,15,7,2,3,5,4,6,8],[0,1,7,8,13,14,10,12,11,6,5,4,3,15,9],[0,1,12,7,8,13,11,10,2,14,6,5,15,4,9],[0,13,1,7,8,3,10,2,11,5,12,6,15,9,14],[0,4,1,14,3,2,7,8,10,11,12,15,9,6,13],[0,1,7,8,10,4,5,3,2,11,13,14,15,9,12],[0,5,2,3,4,6,1,10,12,11,13,14,15,9,8],[0,1,5,2,3,4,6,11,7,12,10,13,14,15,9],[0,2,3,4,6,5,8,7,15,1,10,11,12,14,13],[0,9,15,5,2,4,3,6,13,14,8,12,11,7,1],[0,9,15,6,5,4,2,10,3,13,14,7,12,8,1],[0,6,9,15,4,5,11,2,10,14,13,8,7,3,1],[0,5,9,15,12,14,6,11,10,2,3,8,7,1,4],[0,13,4,9,12,15,6,3,11,10,2,8,7,5,1],[0,10,11,14,12,13,9,2,4,3,6,5,8,7,1]]
+    for a in N:
+        assert(set(RS[a])|{a} == set(N))
+        for I in combinations(RS[a],3):
+            assert([-var_a_sees_bcd(a,*I)] not in constraints)
+            constraints.append([+var_a_sees_bcd(a,*I)])
+"""
 
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
@@ -740,33 +742,32 @@ else:
         if not args.all: 
             break
         else:
-            # clause to prevent solution
-            C = []
-            for a in N:
-                for b,c,d in combinations(N_without[a],3):
-                    if b != N_without[a][0]: continue # this is sufficient  
-                    v = var_a_sees_bcd(a,b,c,d)
-                    C.append(v*(-1 if v in sol else +1))
+            # clause to prevent solutions
+            if args.one_to_one:
+                C = [-x for x in sol]
+            else:
+                C = []
+                for a in N:
+                    for b,c,d in combinations(N_without[a],3):
+                        if b != N_without[a][0]: continue # this is sufficient  
+                        v = var_a_sees_bcd(a,b,c,d)
+                        C.append(v*(-1 if v in sol else +1))
             if args.solver == "cadical":
                 solver.add_clause(C)
             else:
                 constraints.append(C)
 
 
+    time_end = datetime.datetime.now()
 
-
-
-time_end = datetime.datetime.now()
-
-if ct == 0:
-    print (time_end,"no solution!?")
-else:
-    if args.all:
-        print (time_end,"total count:",len(found))
+    if ct == 0:
+        print (time_end,"no solution!?")
     else:
-        print("use parameter -a/--all to enumerate all solutions")
+        if args.all:
+            print (time_end,"total count:",len(found))
+        else:
+            print("use parameter -a/--all to enumerate all solutions")
 
-
-print("solving time :",time_end-time_before_solving)
-print("total time   :",time_end-time_start)
+    print("solving time :",time_end-time_before_solving)
+    print("total time   :",time_end-time_start)
 
