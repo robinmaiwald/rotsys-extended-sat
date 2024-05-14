@@ -165,14 +165,14 @@ if args.lexmin:
     
 if use_emptytriangle_variables:
     var_abc_contains_d_ = {(a,b,c,d):vpool.id() for a,b,c,d in permutations(N,4)} 
-    def var_abc_contains_d(*I): return var_abc_contains_d(I)
+    def var_abc_contains_d(*I): return var_abc_contains_d_[I]
 
     containment_types = [(1,1,1),(-1,1,1),(1,-1,1),(1,1,-1)]
     var_abc_contains_d_type_ = {(a,b,c,d,t):vpool.id() for a,b,c,d in permutations(N,4) for t in containment_types} 
-    def var_abc_contains_d_type(*I): return var_abc_contains_d_type_(I)
+    def var_abc_contains_d_type(*I): return var_abc_contains_d_type_[I]
     
     var_abc_empty_ = {(a,b,c):vpool.id() for a,b,c in permutations(N,3)}
-    def var_abc_empty(*I): return var_abc_empty_(I)
+    def var_abc_empty(*I): return var_abc_empty_[I]
 
 
 
