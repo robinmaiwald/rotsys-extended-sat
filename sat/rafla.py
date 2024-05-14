@@ -44,12 +44,12 @@ constraints = []
 
 # initialize variables
 if args.use_rs: 
-    var_rotsys = {(a,i,b):vpool.id(f"R{a}{i}{b}") for a in N for i in N_without_last for b in N_without[a]} 
+    var_rotsys = {(a,i,b):vpool.id(f"R{a}_{i}_{b}") for a in N for i in N_without_last for b in N_without[a]} 
 
 var_a_sees_bcd = {}
 for a in N:
     for b,c,d in combinations(N_without[a],3):
-        var_a_sees_bcd[a,b,c,d] = var_a_sees_bcd[a,c,d,b] = var_a_sees_bcd[a,d,b,c] = vpool.id(f"S{a}{b}{c}{d}")
+        var_a_sees_bcd[a,b,c,d] = var_a_sees_bcd[a,c,d,b] = var_a_sees_bcd[a,d,b,c] = vpool.id(f"S{a}_{b}_{c}_{d}")
         var_a_sees_bcd[a,b,d,c] = var_a_sees_bcd[a,c,b,d] = var_a_sees_bcd[a,d,c,b] = -var_a_sees_bcd[a,b,c,d]
         
 
@@ -59,12 +59,12 @@ def cross(a,b,c,d):
     if a>b: return cross(b,a,c,d)
     if c>d: return cross(a,b,d,c)
     if a>c: return cross(c,d,a,b)
-    return vpool.id(f"C{a}{b}{c}{d}")
+    return vpool.id(f"C{a}_{b}_{c}_{d}")
 
 
 def dcross(a,b,c,d):
     a,b,c,d = min([(a,b,c,d),(c,d,b,a),(b,a,d,c),(d,c,a,b)])
-    return vpool.id(f"D{a}{b}{c}{d}")
+    return vpool.id(f"D{a}_{b}_{c}_{d}")
 
 var_ab_cross_cd = {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutations(N,4)}
 var_ab_cross_cd_directed = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(N,4)}
