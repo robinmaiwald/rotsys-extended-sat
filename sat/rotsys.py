@@ -19,7 +19,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("n",type=int,help="number of elements")
 parser.add_argument("-a","--all",action='store_true', help="enumerate all configurations")
-parser.add_argument("-l","--lexmin",action='store_true', help="restrict to lexigraphic minima (symmetry breaking w.r.t. relabeling+mirroring)")
+parser.add_argument("-l",'-lex',"--lexmin",action='store_true', help="restrict to lexigraphic minima (symmetry breaking w.r.t. relabeling+mirroring)")
 parser.add_argument("-c","--convex",action='store_true', help="restrict to convex")
 parser.add_argument("-hc","--hconvex",action='store_true', help="restrict to h-convex")
 parser.add_argument("-cm","--cmonotone",action='store_true', help="assume circularly monotone")
