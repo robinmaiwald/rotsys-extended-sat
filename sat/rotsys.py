@@ -48,10 +48,8 @@ parser.add_argument("-aecsub","--alledgescrossedsub",action='store_true', help="
 
 parser.add_argument("-crf","--crossingfamily",type=int,help="forbid crossing family of given size")
 
-parser.add_argument("-C5","--forbidC5",action='store_true', help="forbid the perfect convex C5")
-parser.add_argument("-C6","--forbidC6",action='store_true', help="forbid the perfect convex C6")
-parser.add_argument("-T5","--forbidT5",action='store_true', help="forbid the perfect twisted T5")
-parser.add_argument("-T6","--forbidT6",action='store_true', help="forbid the perfect twisted T6")
+parser.add_argument("-C","--forbidCk",type=int,default=None, help="forbid the perfect convex C_k")
+parser.add_argument("-T","--forbidTk",type=int,default=None, help="forbid the perfect twisted T_k")
 
 parser.add_argument("-etlow",type=int,help="minimum number of empty triangles")
 parser.add_argument("-etupp",type=int,help="maximum number of empty triangles")
@@ -620,21 +618,15 @@ if args.alledgescrossedsub:
 def perfect_convex(n): return [list(range(k))+list(range(k+1,n)) for k in range(n)]
 def perfect_twisted(n): return [list(range(k))+list(reversed(range(k+1,n))) for k in range(n)]
 
-if args.forbidC5: 
-    print ("(C5) forbid C5")
-    constraints += forbid_subrs(perfect_convex(5))
+if args.forbidCk: 
+    k = args.forbidCk
+    print (f"(forbidCk) forbid C{k}")
+    constraints += forbid_subrs(perfect_convex(k))
 
-if args.forbidC6: 
-    print ("(C6) forbid C6")
-    constraints += forbid_subrs(perfect_convex(6))
-
-if args.forbidT5: 
-    print ("(T5) forbid T5")
-    constraints += forbid_subrs(perfect_twisted(5))
-
-if args.forbidT6: 
-    print ("(T6) forbid T6")
-    constraints += forbid_subrs(perfect_twisted(6))
+if args.forbidTk: 
+    k = args.forbidTk
+    print (f"(forbidTk) forbid T{k}")
+    constraints += forbid_subrs(perfect_twisted(k))
 
 
 """
