@@ -266,11 +266,15 @@ if args.hconvex:
 
 if args.gtwisted:
     print ("(GT) restrict to generalized twisted",len(constraints)) 
+    if n >= 4:
+        constraints += forbid_subrs([[1,2,3],[0,3,2],[0,1,3],[0,2,1]]) 
+    if n == 6:
+        constraints += forbid_subrs([[1,2,3,4,5],[0,2,3,4,5],[0,1,3,5,4],[0,4,1,5,2],[0,3,1,5,2],[0,1,3,2,4]]) 
     for subrs in [    
-        [[1, 2, 3, 4], [0, 3, 4, 2], [0, 1, 4, 3], [0, 2, 4, 1], [0, 3, 2, 1]],
-        [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 4, 3], [0, 1, 2, 4], [0, 1, 3, 2]],
-        [[1, 2, 3, 4], [0, 2, 4, 3], [0, 1, 3, 4], [0, 1, 4, 2], [0, 3, 1, 2]],
-        [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3]]]:
+        [[1,2,3,4],[0,3,4,2],[0,1,4,3],[0,2,4,1],[0,3,2,1]],
+        [[1,2,3,4],[0,2,3,4],[0,1,4,3],[0,1,2,4],[0,1,3,2]],
+        [[1,2,3,4],[0,2,4,3],[0,1,3,4],[0,1,4,2],[0,3,1,2]],
+        [[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]]]:
         constraints += forbid_subrs(subrs) 
         
 
@@ -757,10 +761,10 @@ else:
             else:
                 C = []
                 for a in N:
-                    for b,c,d in combinations(N_without[a],3):
-                        if b != N_without[a][0]: continue # this is sufficient  
-                        v = var_a_sees_bcd(a,b,c,d)
-                        C.append(v*(-1 if v in sol else +1))
+                    pi = rs[a]
+                    for i in range(1,len(pi)-1):
+                        C.append(-var_a_sees_bcd(a,pi[0],pi[i],pi[i+1])) 
+                        
             if args.solver == "cadical":
                 solver.add_clause(C)
             else:
