@@ -283,11 +283,13 @@ if args.cmonotone or args.stronglycmonotone:
     print("(*) assume c-monotone")
     x = n # two auxiliary vertices to ensure (strong) c-monotonicity
     y = n+1
-    assert(set(all_vertices) == set(N)|{x,y}) # others are proper vertices
+    assert(set(all_vertices) == set(N)|{x,y}) 
     for a,b in permutations(N,2):
         constraints.append([-var_ab_cross_cd(x,a,y,b)])
-    for a,b,c in permutations(N,3):
-        constraints.append([-var_ab_cross_cd(x,a,b,c),-var_ab_cross_cd(y,a,b,c)])
+
+    # Manfred: above constraint is sufficient for c-monotonicity, the one below is implied
+    #for a,b,c in permutations(N,3):
+    #    constraints.append([-var_ab_cross_cd(x,a,b,c),-var_ab_cross_cd(y,a,b,c)])
 
 
     if args.stronglycmonotone:
@@ -650,17 +652,15 @@ if args.forbidcrmaxk:
         constraints.append([-var_crossing(*J) for J in combinations(I,4)])
 
 
-"""
 if 0:
-    constraints = []
-    print("fix rotation system")
-    RS = [[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[0,10,11,12,13,14,9,15,7,2,3,5,4,6,8],[0,1,7,8,13,14,10,12,11,6,5,4,3,15,9],[0,1,12,7,8,13,11,10,2,14,6,5,15,4,9],[0,13,1,7,8,3,10,2,11,5,12,6,15,9,14],[0,4,1,14,3,2,7,8,10,11,12,15,9,6,13],[0,1,7,8,10,4,5,3,2,11,13,14,15,9,12],[0,5,2,3,4,6,1,10,12,11,13,14,15,9,8],[0,1,5,2,3,4,6,11,7,12,10,13,14,15,9],[0,2,3,4,6,5,8,7,15,1,10,11,12,14,13],[0,9,15,5,2,4,3,6,13,14,8,12,11,7,1],[0,9,15,6,5,4,2,10,3,13,14,7,12,8,1],[0,6,9,15,4,5,11,2,10,14,13,8,7,3,1],[0,5,9,15,12,14,6,11,10,2,3,8,7,1,4],[0,13,4,9,12,15,6,3,11,10,2,8,7,5,1],[0,10,11,14,12,13,9,2,4,3,6,5,8,7,1]]
-    for a in N:
-        assert(set(RS[a])|{a} == set(N))
+    print("fix sub-rotation system")
+    RS =  [[1,2,3,4,5,6,7,8,9,10,11,12,13,14],[0,4,5,2,3,6,7,8,9,10,13,14,11,12],[0,5,1,3,4,6,7,8,9,10,13,14,11,12],[0,1,2,4,5,6,7,8,9,10,13,14,11,12],[0,2,3,5,1,6,7,8,9,10,13,14,11,12],[0,3,4,1,2,6,7,8,9,10,13,14,11,12],[0,1,2,3,4,5,9,10,7,8,13,14,11,12],[0,1,2,3,4,5,10,6,8,9,13,14,11,12],[0,1,2,3,4,5,6,7,9,10,13,14,11,12],[0,1,2,3,4,5,7,8,10,6,13,14,11,12],[0,1,2,3,4,5,8,9,6,7,13,14,11,12],[0,1,2,3,4,5,6,7,8,9,10,13,14,12],[0,13,1,2,3,4,5,6,7,8,9,10,14,11],[0,14,11,1,2,3,4,5,6,7,8,9,10,12],[0,13,11,12,1,2,3,4,5,6,7,8,9,10]]
+    assert(len(RS) <= n)
+    for a in range(len(RS)):
+        assert(set(RS[a])|{a} == set(range(len(RS))))
         for I in combinations(RS[a],3):
-            assert([-var_a_sees_bcd(a,*I)] not in constraints)
             constraints.append([+var_a_sees_bcd(a,*I)])
-"""
+
 
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
@@ -700,9 +700,6 @@ else:
 
     print (datetime.datetime.now(),"start solving")
 
-    #for sol in solver.enum_models(): 
-    # remark: since one-to-one correspondence between solutions of CNF and rotation systems does not work for cmonotone,
-    # we decided to incrementally add clauses to prevent previous solutions
     while True:
         if args.solver == "cadical":
             if not solver.solve(): break
@@ -747,6 +744,36 @@ else:
                     assert(next_found)
                 rs.append(order_x)
         
+
+
+        if 0:
+            rs_full = []
+            for x in all_vertices: 
+                y = min(all_vertices_without[x]) 
+
+                order_x = [y]
+                remaining = set(all_vertices)-{x,y}
+                while remaining:
+                    next_found = False
+                    for a in remaining:
+                        a_is_next = True
+                        for b in remaining - {a}:
+                            if -var_a_sees_bcd(x,y,a,b) in sol:
+                                a_is_next = False
+                                break
+                        if a_is_next: 
+                            order_x.append(a)
+                            remaining.remove(a)
+                            next_found = True
+                            break
+                    #print("nextfound",x,y,remaining)
+                    assert(next_found)
+                rs_full.append(order_x)
+            print("rs",rs)
+            print("rs_full",rs_full)
+            exit()
+
+
         assert(rs not in found)   
         found.append(rs)
         if outfile: outfile.write(str(rs)+"\n")
@@ -759,12 +786,8 @@ else:
             if args.one_to_one:
                 C = [-x for x in sol]
             else:
-                C = []
-                for a in N:
-                    pi = rs[a]
-                    for i in range(1,len(pi)-1):
-                        C.append(-var_a_sees_bcd(a,pi[0],pi[i],pi[i+1])) 
-                        
+                C = [-var_a_sees_bcd(a,rs[a][0],rs[a][i],rs[a][i+1]) for a in N for i in range(1,n-2)]
+                     
             if args.solver == "cadical":
                 solver.add_clause(C)
             else:
