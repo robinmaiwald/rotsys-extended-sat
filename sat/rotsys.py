@@ -669,11 +669,16 @@ print ()
 
 
 if args.cnf2file:
-    print ("write cnf instance to file:",args.cnf2file)
-
-    cnf = CNF()
-    for c in constraints: cnf.append(c)
-    cnf.to_file(args.cnf2file)
+    # CNF(from_clauses=constraints).to_file(args.cnf2file) # command does not work for inccnf
+    with open(args.cnf2file,"w") as f:
+        if args.cnf2file.split(".")[-1] == "inccnf":
+            print ("write inccnf to file:",args.cnf2file)
+            f.write("p inccnf\n")
+        else:
+            print ("write cnf to file:",args.cnf2file)
+            f.write("p cnf "+str(vpool.top)+" "+str(len(constraints))+"\n")
+        for c in constraints:
+            f.write(" ".join(str(x) for x in c)+" 0\n")
 
 else:
     outfile = None
