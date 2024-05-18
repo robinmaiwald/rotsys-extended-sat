@@ -676,13 +676,10 @@ if args.cnf2file:
     cnf.to_file(args.cnf2file)
 
 else:
-
     outfile = None
     if args.rs2file:
         print ("write rotation systems to file:",args.rs2file)
         outfile = open(args.rs2file,"w")
-
-
 
     ct = 0
     found = []
