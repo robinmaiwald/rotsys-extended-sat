@@ -21,8 +21,8 @@ parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove ass
 parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane Hamiltonian cycle")
 parser.add_argument("-HP","--forbidHP",action='store_true', help="forbid plane Hamiltonian path")
 
+parser.add_argument("-o","--cnf2file", help="if specified, export CNF to this file")
 parser.add_argument("-or","--rs2file", help="if specified, export rotation systems to this file")
-parser.add_argument("-oc","--cnf2file", help="if specified, export CNF to this file")
 parser.add_argument("-ov","--var2file", help="if specified, export variables to this file")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
 parser.add_argument("--debug","-d",type=int,default=0,help="debug level")

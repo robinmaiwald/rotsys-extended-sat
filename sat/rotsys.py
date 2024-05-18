@@ -326,6 +326,15 @@ for a,b,c,d in permutations(all_vertices,4):
     constraints.append([+var_ab_cross_cd_directed(a,b,c,d),+var_ab_cross_cd_directed(a,b,d,c),-var_ab_cross_cd(a,b,c,d)])
 
 
+if 1:
+    print("(*) optimization for crossings")
+    # among every 4 tuple there is at most one directed crossing
+    # adding this fact slightly improves runtime of kissat 
+    for I in combinations(all_vertices,4):
+        dcross_vars_I = {var_ab_cross_cd_directed(*J) for J in permutations(I)}
+        for a,b in combinations(dcross_vars_I,2):
+            constraints.append([-a,-b])
+
 
 if args.lexmin:
     assert(args.natural)
