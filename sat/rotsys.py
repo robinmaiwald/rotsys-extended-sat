@@ -25,6 +25,8 @@ parser.add_argument("-hc","--hconvex",action='store_true', help="restrict to h-c
 parser.add_argument("-cm","--cmonotone",action='store_true', help="assume circularly monotone")
 parser.add_argument("-scm","--stronglycmonotone",action='store_true', help="assume strongly circularly monotone")
 parser.add_argument("-gt","--gtwisted",action='store_true', help="restrict to generalized twisted") 
+parser.add_argument("--forcecrmax",action='store_true', help="force crossingmaximal drawing")
+
 
 parser.add_argument("-nat","--natural",action='store_false',help="remove assumption that first line needs not to be 2,3,...,n (enabled by default, use parameter to disable)")
 parser.add_argument("-v4","--valid4tuples",action='store_false',help="remove assumption that 4-tuples are valid (enabled by default, use parameter to disable)")
@@ -51,6 +53,8 @@ parser.add_argument("-crf","--crossingfamily",type=int,help="forbid crossing fam
 parser.add_argument("-C","--forbidCk",type=int,default=None, help="forbid the perfect convex C_k")
 parser.add_argument("-T","--forbidTk",type=int,default=None, help="forbid the perfect twisted T_k")
 parser.add_argument("-X","--forbidcrmaxk",type=int,default=None, help="forbid crossingmaximal subdrawings of K_k")
+
+
 
 parser.add_argument("-etlow",type=int,help="minimum number of empty triangles")
 parser.add_argument("-etupp",type=int,help="maximum number of empty triangles")
@@ -644,10 +648,8 @@ if args.forbidTk:
     print (f"(forbidTk) forbid T{k}")
     constraints += forbid_subrs(perfect_twisted(k))
 
-if args.forbidcrmaxk: 
-    k = args.forbidcrmaxk
-    print (f"(forbidcrmaxk) forbid crossingmaximal subdrawings of K_{k}")
 
+if args.forbidcrmaxk or args.forcecrmax:
     var_crossing_ = {I:vpool.id() for I in combinations(N,4)}
     def var_crossing(*I): return var_crossing_[I]
 
@@ -657,9 +659,17 @@ if args.forbidcrmaxk:
         constraints.append([+var_crossing(a,b,c,d),-var_ab_cross_cd(a,c,b,d)])
         constraints.append([+var_crossing(a,b,c,d),-var_ab_cross_cd(a,d,b,c)])
 
+if args.forbidcrmaxk: 
+    k = args.forbidcrmaxk
+    print (f"(forbidcrmaxk) forbid crossingmaximal subdrawings of K_{k}")
+
     for I in combinations(N,k):
         constraints.append([-var_crossing(*J) for J in combinations(I,4)])
 
+if args.forcecrmax:
+    print (f"(forcecrmax) force crossingmaximal drawing")
+    for I in combinations(N,4):
+        constraints.append([var_crossing(*I)])
 
 if 0:
     print("fix sub-rotation system")

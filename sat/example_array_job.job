@@ -1,7 +1,0 @@
-#!/bin/bash --login
-#SBATCH --array=10-30:2
-#SBATCH -J matlab_run
-#SBATCH -o matlab_run.%a.out
-echo "hallo von $SLURM_ARRAY_TASK_ID.m" 
-
-# run with "sbatch x.job"
