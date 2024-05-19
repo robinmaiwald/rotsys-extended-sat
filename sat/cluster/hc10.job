@@ -3,7 +3,7 @@
 #SBATCH -J et10
 #SBATCH -o et10.%a.out
 echo "test cubes10/part$SLURM_ARRAY_TASK_ID"
-cat instance_10_ET15.inccnf cubes/10.$SLURM_ARRAY_TASK_ID | cadical
-# create CNF with "python rotsys.py -etupp 15 10 -o instance_10_ET15.inccnf"
-# create cubes with "python create_cubes.py 10 cubes10/part -p 300"
+cat instance_10_HC.inccnf cubes10/part.$SLURM_ARRAY_TASK_ID | cadical
+# create CNF with "python rotsys.py -HC 10 -o instance_10_HC.inccnf"
+# create cubes with "python cluster/create_cubes.py 10 cubes10/part -p 300"
 # run with "sbatch job"
