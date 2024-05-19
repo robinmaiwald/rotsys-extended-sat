@@ -1,0 +1,9 @@
+#!/bin/bash --login
+#SBATCH --array 1-1000
+#SBATCH -J hc11
+#SBATCH -o _log_hc11.%a.out
+echo "test cubes10/part$SLURM_ARRAY_TASK_ID"
+cat instance_11_HC.inccnf cubes11/part.$SLURM_ARRAY_TASK_ID | cadical
+# create CNF with "python rotsys.py -HC 11 -o instance_11_HC.inccnf"
+# create cubes with "python cluster/create_cubes.py 11 cubes11/part -p 1000"
+# run with "sbatch job"
