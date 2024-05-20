@@ -1,5 +1,6 @@
 #!/bin/bash --login
 #SBATCH --array 1-1000
+#SBATCH --time=168:00:00
 #SBATCH -J hc11
 #SBATCH -o _log_hc11.%a.out
 echo "test cubes10/part$SLURM_ARRAY_TASK_ID"
