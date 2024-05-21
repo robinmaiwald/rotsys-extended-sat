@@ -14,6 +14,45 @@ Optional:
 - `SageMath`: https://www.sagemath.org/
 
 
+
+
+#  Overall Description
+
+The python program `rotsys.py` comes with a mandatory parameter `n` for the number of vertices and several optional parameters.
+The program creates a SAT instance
+and then uses the Python interfaces `pycosat`  and  `PySAT` to run the
+SAT solver `PicoSAT`, version 965, and `CaDiCaL`, version 1.5.3, respectively.
+As default, we use the solver CaDiCaL because it is more efficient.
+The output of the program is then either a rotation system with the desired properties 
+(which is obtained from parsing the variable assignment of a solution to the instance) 
+or, if the instance is unsatisfiable, it prints that no solution exists.
+In the case the instance has various solutions,
+one can use `-a` to enumerate all solutions.
+
+In the case the instance is unsatisfiable, 
+we can ask the solver for a certificate and use the independent proof checking tool `DRAT-trim` to verify its correctness.
+More specifically,
+we can use the parameter `-o` to export the CNF to a specified file, which has the DIMACS file format.
+By running
+```
+    cadical -q --unsat instance.cnf instance.proof
+```
+CaDiCaL exports a DRAT proof which certificates the unsatisfiability.
+The correctness of the DRAT proof can then be verified with 
+```
+    drat-trim instance.cnf instance.proof -t 999999
+```
+Note that the parameter `-t` increases the time limit for DRAT-trim,
+which is quite low by default.
+
+In the following, 
+we will only describe how to use the program `rotsys.py`
+to show certain statements and
+omit the explicit commands to certifying unsatisfiability.
+
+
+
+
 # Parameters 
 
 - `-n`: number of elements
@@ -79,74 +118,3 @@ Optional:
 - `--solver`: which SAT solver to use, default: cadical, alternative: pycosat
 
 - `-1` or `--one_to_one`: most encodings come with a one-to-one correspondence between CNF and rotation systems, that is, all auxiliary variables are well-defined. this flag can be used to detect duplicates
-
-
-
-#  Overall Description
-
-The python program `rotsys.py` comes with a mandatory parameter `n` for the number of vertices and several optional parameters.
-The program creates a SAT instance
-and then uses the Python interfaces `pycosat`  and  `PySAT` to run the
-SAT solver `PicoSAT`, version 965, and `CaDiCaL`, version 1.5.3, respectively.
-As default, we use the solver CaDiCaL because it is more efficient.
-The output of the program is then either a rotation system with the desired properties 
-(which is obtained from parsing the variable assignment of a solution to the instance) 
-or, if the instance is unsatisfiable, it prints that no solution exists.
-In the case the instance has various solutions,
-one can use `-a` to enumerate all solutions.
-
-In the case the instance is unsatisfiable, 
-we can ask the solver for a certificate and use the independent proof checking tool `DRAT-trim` to verify its correctness.
-More specifically,
-we can use the parameter `-o` to export the CNF to a specified file, which has the DIMACS file format.
-By running
-```
-    cadical -q --unsat instance.cnf instance.proof
-```
-CaDiCaL exports a DRAT proof which certificates the unsatisfiability.
-The correctness of the DRAT proof can then be verified with 
-```
-    drat-trim instance.cnf instance.proof -t 999999
-```
-Note that the parameter `-t` increases the time limit for DRAT-trim,
-which is quite low by default.
-
-In the following, 
-we will only describe how to use the program `rotsys.py`
-to show certain statements and
-omit the explicit commands to certifying unsatisfiability.
-
-
-
-
-# Characterization of Rotation Systems
-
-To enumerate all $\obstructionFour$-free pre-rotation systems on 5 vertices
-and test that any two
-that are not obtained via reflection
-have distinct pairs of crossing edges,
-run the following command:
-```
-    python rotsys.py 5 -v5 -a -nat -cpc
-```
-Here the parameters have the following purposes:
-
-- The first parameter specifies the number of vertices $n=5$.
-    
-- By default, the program excludes the 
-    three obstruction to rotation systems on $n=5$.
-    The parameter `-v5` specifies that 
-    these obstructions are not excluded.
-    
-- The parameter `-a` specifies that 
-    all solutions should be enumerated.
-    
-- By default, the program only searches for (pre-)rotation systems with natural labeling.
-    The parameter `-nat` specifies that 
-    we also search for solutions which are not naturally labeled.
-    
-- The parameter `-cpc` specifies that 
-    the pairs of crossing edges should be checked:
-    any two rotation systems (not obtained via reflection)
-    have distinct crossing pairs. 
-
