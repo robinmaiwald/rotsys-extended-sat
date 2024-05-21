@@ -22,10 +22,10 @@ parser.add_argument("-a","--all",action='store_true', help="enumerate all config
 parser.add_argument("-l",'-lex',"--lexmin",action='store_true', help="restrict to lexigraphic minima (symmetry breaking w.r.t. relabeling+mirroring)")
 parser.add_argument("-c","--convex",action='store_true', help="restrict to convex")
 parser.add_argument("-hc","--hconvex",action='store_true', help="restrict to h-convex")
-parser.add_argument("-cm","--cmonotone",action='store_true', help="assume circularly monotone")
-parser.add_argument("-scm","--stronglycmonotone",action='store_true', help="assume strongly circularly monotone")
+parser.add_argument("-cm","--cmonotone",action='store_true', help="restrict to circularly monotone")
+parser.add_argument("-scm","--stronglycmonotone",action='store_true', help="restrict to strongly circularly monotone")
 parser.add_argument("-gt","--gtwisted",action='store_true', help="restrict to generalized twisted") 
-parser.add_argument("--forcecrmax",action='store_true', help="force crossingmaximal drawing")
+parser.add_argument("-crmax","--crossingmaximal",action='store_true', help="force crossingmaximal drawing")
 
 
 parser.add_argument("-nat","--natural",action='store_false',help="remove assumption that first line needs not to be 2,3,...,n (enabled by default, use parameter to disable)")
@@ -34,9 +34,6 @@ parser.add_argument("-v5","--valid5tuples",action='store_false',help="remove ass
 
 parser.add_argument("-HC","--forbidHC",action='store_true', help="forbid plane Hamiltonian cycle")
 parser.add_argument("-HC+","--forbidHCplus",action='store_true', help="forbid plane Hamiltonian subgraphs on 2n-3 edges")
-parser.add_argument("-HC++","--forbidHCplusplus",action='store_true', help="assume that not every plane Hamiltonian cycle can be extended to a plane Hamiltonian subgraph on 2n-3 edges")
-
-parser.add_argument("-HPe","--forbidHPedge",action='store_true', help="assume that for one edge there is no plane Hamiltonian path")
 
 parser.add_argument("-HT+","--HoffmannTothplus",type=int, help="check strengthened Hoffmann-Toth property")
 
@@ -54,16 +51,13 @@ parser.add_argument("-C","--forbidCk",type=int,default=None, help="forbid the pe
 parser.add_argument("-T","--forbidTk",type=int,default=None, help="forbid the perfect twisted T_k")
 parser.add_argument("-X","--forbidcrmaxk",type=int,default=None, help="forbid crossingmaximal subdrawings of K_k")
 
-
-
 parser.add_argument("-etlow",type=int,help="minimum number of empty triangles")
 parser.add_argument("-etupp",type=int,help="maximum number of empty triangles")
 
 parser.add_argument("-crlow",type=int,help="minimum number of crossings")
 parser.add_argument("-crupp",type=int,help="maximum number of crossings")
 
-
-parser.add_argument("--use_rs_vars","-R",action='store_true', help="use variables for encoding rotations system via permutations")
+parser.add_argument("-R","--use_rs_vars",action='store_true', help="use variables for encoding rotations system via permutations")
 
 parser.add_argument("-r2f","--rs2file", type=str, help="if specified, export rotation systems to this file")
 parser.add_argument("-c2f","--cnf2file","-o", type=str,help="if specified, export CNF to this file")
@@ -474,27 +468,6 @@ if args.forbidHCplus:
                 constraints += forbid_planar_subgraph(HC_edges+list(E))
 
 
-if args.forbidHCplusplus:
-    assert(not args.natural) 
-    print ("(HC++) Assume C is a Hamiltonian cycle through 1,2,3,...n ...",len(constraints))
-    perm = N
-    HC_edges = [(perm[i-1],perm[i]) for i in N]
-    constraints += assert_planar_subgraph(HC_edges)
-
-    print ("(HC++) ... which cannot be extended to a plane Hamiltonian subgraph on 2n-3 edges",len(constraints))
-    remaining_edges = [(a,b) for (a,b) in combinations(N,2) if (a,b) not in HC_edges and (b,a) not in HC_edges]
-    for E in combinations(remaining_edges,n-3):
-        constraints += forbid_planar_subgraph(HC_edges+list(E))
-
-
-if args.forbidHPedge:
-    assert(not args.lexmin)
-    print ("(HPe) for one edge there is no plane Hamiltonian path; wlog edge 01",len(constraints))
-    for perm in permutations(N):
-        if perm.index(1) == perm.index(0)+1:
-            constraints += forbid_planar_subgraph([(perm[i-1],perm[i]) for i in range(1,n)])
-
-
 
 if args.HoffmannTothplus:
     k = args.HoffmannTothplus
@@ -649,7 +622,7 @@ if args.forbidTk:
     constraints += forbid_subrs(perfect_twisted(k))
 
 
-if args.forbidcrmaxk or args.forcecrmax:
+if args.forbidcrmaxk or args.crossingmaximal:
     var_crossing_ = {I:vpool.id() for I in combinations(N,4)}
     def var_crossing(*I): return var_crossing_[I]
 
@@ -666,8 +639,8 @@ if args.forbidcrmaxk:
     for I in combinations(N,k):
         constraints.append([-var_crossing(*J) for J in combinations(I,4)])
 
-if args.forcecrmax:
-    print (f"(forcecrmax) force crossingmaximal drawing")
+if args.crossingmaximal:
+    print (f"(crmax) force crossingmaximal drawing")
     for I in combinations(N,4):
         constraints.append([var_crossing(*I)])
 
