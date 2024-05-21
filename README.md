@@ -1,1 +1,1 @@
-If you are ready, enter the `sat` directory 
+If you are ready for SAT, enter the `sat` directory 
