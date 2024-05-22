@@ -111,6 +111,9 @@ omit the explicit commands to certifying unsatisfiability.
 
 - `-R` or `--use_rs_vars`: use variables for encoding rotations system via permutations
 
+
+- `--checkATgraphs`: check that no two rotation systems yield the same pair of crossing edges (AT graph)
+
 - `-o` or `--rs2file`: write rotation systems to this file
 
 - `-c2f` or `--cnf2file` or `-o`: write CNF in DIMACS form to this file

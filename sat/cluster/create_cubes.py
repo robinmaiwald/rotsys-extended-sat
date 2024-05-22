@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("n",type=int,help="number of points")
 
 parser.add_argument("output", type=str,help="")
-parser.add_argument("--depth","-d",type=int,default=3,help="depth of split")
+parser.add_argument("--depth","-d",type=int,default=None,help="depth of split")
 parser.add_argument("--parts","-p", type=int, default=1, help="number of parts")
 
 parser.add_argument("-cm","--cmonotone",action='store_true', help="assume circularly monotone")
@@ -46,24 +46,11 @@ for a in all_vertices: # remark: using "all_vertices" instead of "N" because for
         
 
 
-if 0:
-	cube_vars = []
-	for a in N[-2:]:
-		# last two rows should be relatively independent
-
-		for i in range(2,len(N_without[a])):
-			b = N_without[a][i-2]
-			c = N_without[a][i-1]
-			d = N_without[a][i]
-			cube_vars.append(var_a_sees_bcd(a,b,c,d))
-
-
-	print(f"computed {len(cube_vars)} cube variables")
-	cubes = list(product(*[[+v,-v] for v in cube_vars]))
-
-else:
+if 1:
 	cubes = []
 	for a in N[-1:]:
+		k = len(N_without[a])
+		if args.depth: k = min(k,args.depth)
 		for pi in permutations(N_without[a]):
 			if pi[0] == N_without[a][0]:
 				C = []

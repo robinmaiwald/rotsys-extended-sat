@@ -10,12 +10,13 @@ for line in open(argv[1]):
 		time = float(L[5])
 		stat.append(time)
 
+stat.sort()
 print(stat)
 
-stat.sort()
 print("total cubes:",len(stat))
 print("total time:",sum(stat))
-print("average per cube:",sum(stat)/len(stat))
+print("average time per cube:",sum(stat)/len(stat))
+print("maximum time:",max(stat))
 
 plt_fp = argv[1]+'.logplot.png'
 #plt = [point2d((i+1,t),marker='o') for i,t in enumerate(stat)]

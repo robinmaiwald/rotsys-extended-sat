@@ -59,6 +59,8 @@ parser.add_argument("-crupp",type=int,help="maximum number of crossings")
 
 parser.add_argument("-R","--use_rs_vars",action='store_true', help="use variables for encoding rotations system via permutations")
 
+parser.add_argument("--checkATgraphs",action='store_true',help="assert that no two rotation systems yield the same pair of crossing edges (AT graph)")
+
 parser.add_argument("-r2f","--rs2file", type=str, help="if specified, export rotation systems to this file")
 parser.add_argument("-c2f","--cnf2file","-o", type=str,help="if specified, export CNF to this file")
 parser.add_argument("-1","--one_to_one",action='store_true', help="one-to-one correspondence between CNF and rotation systems")
@@ -654,6 +656,12 @@ if 0:
             constraints.append([+var_a_sees_bcd(a,*I)])
 
 
+if 0:
+    print("fix cube")
+    cube = [449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,-464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,-479,480,481,482,483,484,485,486,487,488,-489,490,491,492,493,494,-495,496,497,498,499,500,-501,-502,503,504]
+    for x in cube: constraints.append([x])
+
+
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
 print("creating time:",time_before_solving-time_start)
@@ -680,6 +688,9 @@ else:
 
     ct = 0
     found = []
+
+    if args.checkATgraphs: 
+        foundATgraphs = []
 
     if args.solver == "cadical":
         try:
@@ -772,6 +783,17 @@ else:
         found.append(rs)
         if outfile: outfile.write(str(rs)+"\n")
         print (datetime.datetime.now(),"solution #",ct,"\t",rs)    
+
+
+        if args.checkATgraphs:
+            assert(args.valid4tuples)
+            N2 = combinations(N,2)
+            crossing_pairs = [(e,f) for e,f in combinations(N2,2) if not set(e)&set(f) and var_ab_cross_cd(*e,*f) in sol]
+            if rs[0][1] < rs[0][-1]: # wlog, otherwise reflection 
+                assert(crossing_pairs not in foundATgraphs) # make sure there is no duplicate
+                foundATgraphs.append(crossing_pairs)
+            print("found new AT-graph graph:",crossing_pairs)
+
 
         if not args.all: 
             break
