@@ -510,8 +510,8 @@ if args.forbidAllPairsHP:
 if args.emptycycles:
     # the selected pq must be intersected or cycle is non-planar
     k = args.emptycycles
-    var_empty_cycle_select_pq_ = {(I,p,q):vpool.id(f"W_{I}_{p}_{q}") for I in permutations(N,k) for p,q in combinations(set(N)-set(I),2)}
-    def var_empty_cycle_select_pq(*I): return var_empty_cycle_select_pq_[I]
+    var_empty_cycle_violation_pq_ = {(I,p,q):vpool.id(f"W_{I}_{p}_{q}") for I in permutations(N,k) for p,q in combinations(set(N)-set(I),2)}
+    def var_empty_cycle_violation_pq(*I): return var_empty_cycle_violation_pq_[I]
     for I in permutations(N,k):
         if I[0] == min(I) and I[1] > I[-1]: 
             # w.l.o.g. for cyclic permutation 
@@ -519,17 +519,16 @@ if args.emptycycles:
             E_I = [(I[j-1],I[j]) for j in range(k)] # edges of cycle
             constraints.append(
                  [+var_ab_cross_cd(*e,*f) for e,f in combinations(E_I,2) if not set(e)&set(f)]
-                +[+var_empty_cycle_select_pq(I,p,q) for p,q in PQ])
+                +[+var_empty_cycle_violation_pq(I,p,q) for p,q in PQ])
             for p,q in PQ:
                 for cross_indication in product([+1,-1],repeat=k):
-                    if (cross_indication.count(+1) % 2) == 0: 
-                        # if pq is selected as witness for I not forming an empty k-cycle, 
-                        # then the number of crossings of pq and E_I is odd
-                        # (we forbid even counts)
+                    # pq is witnessing that I not forms an empty k-cycle 
+                    # if and only if the number of crossings of pq and E_I is odd
+                    t = +1 if (cross_indication.count(+1) % 2) == 0 else -1 
+                    if t == +1: 
                         constraints.append(
-                             [-var_empty_cycle_select_pq(I,p,q)]
+                             [-t*var_empty_cycle_violation_pq(I,p,q)]
                             +[-s*var_ab_cross_cd(p,q,*e) for s,e in zip(cross_indication,E_I)])
-
 
 
 
