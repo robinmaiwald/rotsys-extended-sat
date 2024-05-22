@@ -1,0 +1,10 @@
+#!/bin/bash --login
+#SBATCH --array 1-100
+#SBATCH --time=168:00:00
+#SBATCH -J hc10
+#SBATCH -o _log_ec98.%a.out
+echo "test cubes9/part$SLURM_ARRAY_TASK_ID"
+cat ec98.inccnf cubes9/part.$SLURM_ARRAY_TASK_ID | cadical
+# create CNF with "python rotsys.py 9 --emptyc 8 -o ec98.inccnf"
+# create cubes with "python create_cubes.py 9 cubes9/part -p 100"
+# run with "sbatch job"
