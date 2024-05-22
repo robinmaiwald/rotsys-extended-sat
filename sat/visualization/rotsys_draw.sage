@@ -1,9 +1,3 @@
-"""
-    A SAT framework for topological drawings
-    (c) 2022 Manfred Scheucher <scheucher@math.tu-berlin.de>
-             Helena Bergold <helena.bergold@fu-berlin.de>
-"""
-
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
