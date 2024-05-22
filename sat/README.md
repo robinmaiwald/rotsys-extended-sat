@@ -117,7 +117,7 @@ with its parameters.
 
 - `--checkATgraphs`: check that no two rotation systems yield the same pair of crossing edges (AT graph)
 
-- `-o` or `--rs2file`: write rotation systems to this file
+- `-r2f` or `--rs2file`: write rotation systems to this file
 
 - `-c2f` or `--cnf2file` or `-o`: write CNF in DIMACS form to this file
 
