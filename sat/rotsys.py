@@ -1,8 +1,6 @@
 """
-	A SAT framework for topological drawings
-    (c) 2022 Manfred Scheucher <scheucher@math.tu-berlin.de>
-             Helena Bergold <helena.bergold@fu-berlin.de>
-             Meghana M. Reddy <meghana.mreddy@inf.ethz.ch>
+	A SAT framework for simple drawings, a part of the article
+	"Investigating Simple Drawings of $K_n$ using SAT"
 """
 
 

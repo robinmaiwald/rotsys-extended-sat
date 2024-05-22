@@ -1,6 +1,5 @@
 This repository contains supplemental material to the article 
 "Investigating Simple Drawings of $K_n$ using SAT"
-by Helena Bergold and Manfred Scheucher
 
 
 # Installation
