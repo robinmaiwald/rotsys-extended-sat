@@ -283,7 +283,7 @@ if args.cmonotone or args.stronglycmonotone:
     for a,b in permutations(N,2):
         constraints.append([-var_ab_cross_cd(x,a,y,b)])
 
-    # Manfred: above constraint is sufficient for c-monotonicity, the one below is implied
+    # above constraint is sufficient for c-monotonicity, the one below is implied
     #for a,b,c in permutations(N,3):
     #    constraints.append([-var_ab_cross_cd(x,a,b,c),-var_ab_cross_cd(y,a,b,c)])
 
