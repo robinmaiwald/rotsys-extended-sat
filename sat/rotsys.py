@@ -61,8 +61,11 @@ parser.add_argument("--checkATgraphs",action='store_true',help="assert that no t
 
 parser.add_argument("-r2f","--rs2file", type=str, help="if specified, export rotation systems to this file")
 parser.add_argument("-c2f","--cnf2file","-o", type=str,help="if specified, export CNF to this file")
+parser.add_argument("-v2f","--var2file", type=str,help="if specified, export variables of CNF to this file")
 parser.add_argument("-1","--one_to_one",action='store_true', help="one-to-one correspondence between CNF and rotation systems")
 parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical', help="SAT solver")
+
+parser.add_argument("-D","--debug", action='store_true',help="debug mode")
 
 
 
@@ -507,23 +510,25 @@ if args.forbidAllPairsHP:
 if args.emptycycles:
     # the selected pq must be intersected or cycle is non-planar
     k = args.emptycycles
-    var_empty_cycle_select_pq_ = {(I,p,q):vpool.id() for I in permutations(N,k) for p,q in combinations(set(N)-set(I),2)}
+    var_empty_cycle_select_pq_ = {(I,p,q):vpool.id(f"W_{I}_{p}_{q}") for I in permutations(N,k) for p,q in combinations(set(N)-set(I),2)}
     def var_empty_cycle_select_pq(*I): return var_empty_cycle_select_pq_[I]
     for I in permutations(N,k):
-        PQ = list(combinations(set(N)-set(I),2))
-        E_I = [(I[j-1],I[j]) for j in range(k)] # edges of cycle
-        constraints.append(
-             [+var_ab_cross_cd(*e,*f) for e,f in combinations(E_I,2) if not set(e)&set(f)]
-            +[+var_empty_cycle_select_pq(I,p,q) for p,q in PQ])
-        for p,q in PQ:
-            for cross_indication in product([+1,-1],repeat=k):
-                if (cross_indication.count(+1) % 2) == 0: 
-                    # if pq is selected as witness for I not forming an empty k-cycle, 
-                    # then the number of crossings of pq and E_I is odd
-                    # (we forbid even counts)
-                    constraints.append(
-                         [-var_empty_cycle_select_pq(I,p,q)]
-                        +[-s*var_ab_cross_cd(p,q,*e) for s,e in zip(cross_indication,E_I)])
+        if I[0] == min(I) and I[1] > I[-1]: 
+            # w.l.o.g. for cyclic permutation 
+            PQ = list(combinations(set(N)-set(I),2))
+            E_I = [(I[j-1],I[j]) for j in range(k)] # edges of cycle
+            constraints.append(
+                 [+var_ab_cross_cd(*e,*f) for e,f in combinations(E_I,2) if not set(e)&set(f)]
+                +[+var_empty_cycle_select_pq(I,p,q) for p,q in PQ])
+            for p,q in PQ:
+                for cross_indication in product([+1,-1],repeat=k):
+                    if (cross_indication.count(+1) % 2) == 0: 
+                        # if pq is selected as witness for I not forming an empty k-cycle, 
+                        # then the number of crossings of pq and E_I is odd
+                        # (we forbid even counts)
+                        constraints.append(
+                             [-var_empty_cycle_select_pq(I,p,q)]
+                            +[-s*var_ab_cross_cd(p,q,*e) for s,e in zip(cross_indication,E_I)])
 
 
 
@@ -666,7 +671,27 @@ print("creating time:",time_before_solving-time_start)
 print ()
 
 
+if args.var2file:
+    print ("write variables to file:",args.var2file)
+    with open(args.var2file,"w") as f:
+        #f.write(str(vpool.id2obj)+"\n")
+        for k,v in vpool.id2obj.items(): f.write(f"{k} -> {v}\n")
+        f.close()
+
+
 if args.cnf2file:
+    if 0:
+        # filter duplicates
+        constraints2 = []
+        constraints2set = set()
+        for c in constraints:
+            c = tuple(sorted(c))
+            if c not in constraints2set:
+                constraints2.append(c)
+                constraints2set.add(c)
+        constraints = constraints2
+
+
     # CNF(from_clauses=constraints).to_file(args.cnf2file) # command does not work for inccnf
     with open(args.cnf2file,"w") as f:
         if args.cnf2file.split(".")[-1] == "inccnf":
@@ -675,7 +700,16 @@ if args.cnf2file:
         else:
             print ("write cnf to file:",args.cnf2file)
             f.write("p cnf "+str(vpool.top)+" "+str(len(constraints))+"\n")
-        for c in constraints:
+
+        for i,c in enumerate(constraints):
+            if args.debug:
+                if not [abs(x) for x in c if abs(x) not in vpool.id2obj]: # all variables have names
+                    f.write("c")
+                    for x in c:
+                        if x > 0: f.write(" +"+vpool.id2obj[x])
+                        if x < 0: f.write(" -"+vpool.id2obj[-x])
+                    f.write("\n")
+
             f.write(" ".join(str(x) for x in c)+" 0\n")
 
 else:
