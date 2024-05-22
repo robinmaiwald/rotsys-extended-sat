@@ -525,7 +525,7 @@ if args.emptycycles:
                     # pq is witnessing that I not forms an empty k-cycle 
                     # if and only if the number of crossings of pq and E_I is odd
                     t = +1 if (cross_indication.count(+1) % 2) == 0 else -1 
-                    if t == +1: 
+                    if t == +1: # the inverse direction is not helpful
                         constraints.append(
                              [-t*var_empty_cycle_violation_pq(I,p,q)]
                             +[-s*var_ab_cross_cd(p,q,*e) for s,e in zip(cross_indication,E_I)])
