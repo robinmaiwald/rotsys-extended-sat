@@ -1,7 +1,7 @@
 #!/bin/bash --login
 #SBATCH --array 1-100
 #SBATCH --time=168:00:00
-#SBATCH -J hc10
+#SBATCH -J ec97
 #SBATCH -o _log_ec97.%a.out
 echo "test cubes9/part$SLURM_ARRAY_TASK_ID"
 cat ec97.inccnf cubes9/part.$SLURM_ARRAY_TASK_ID | cadical
