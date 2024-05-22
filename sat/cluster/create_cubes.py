@@ -49,12 +49,14 @@ for a in all_vertices: # remark: using "all_vertices" instead of "N" because for
 if 1:
 	cubes = []
 	for a in N[-1:]:
-		k = len(N_without[a])
-		if args.depth: k = min(k,args.depth)
-		for pi in permutations(N_without[a]):
-			if pi[0] == N_without[a][0]:
+		others = N_without[a]
+		if args.depth and len(others) > args.depth: 
+			others = others[:args.depth]
+
+		for pi in permutations(others):
+			if pi[0] == others[0]:
 				C = []
-				for I in combinations(N_without[a],3):
+				for I in combinations(others,3):
 					I_inv = [(x,y) for (x,y) in combinations(I,2) if pi.index(x)>pi.index(y)] # number of inversions in the triple I=(b,c,d)
 					if len(I_inv)%2 == 0:
 						C.append(+var_a_sees_bcd(a,*I))
