@@ -1,8 +1,6 @@
 """
-	A SAT framework for topological drawings
-    (c) 2022 Manfred Scheucher <scheucher@math.tu-berlin.de>
-             Helena Bergold <helena.bergold@fu-berlin.de>
-             Meghana M. Reddy <meghana.mreddy@inf.ethz.ch>
+	A SAT framework for simple drawings, a part of the article
+	"Investigating Simple Drawings of $K_n$ using SAT"
 """
 
 
@@ -287,7 +285,7 @@ if args.cmonotone or args.stronglycmonotone:
     for a,b in permutations(N,2):
         constraints.append([-var_ab_cross_cd(x,a,y,b)])
 
-    # Manfred: above constraint is sufficient for c-monotonicity, the one below is implied
+    # above constraint is sufficient for c-monotonicity, the one below is implied
     #for a,b,c in permutations(N,3):
     #    constraints.append([-var_ab_cross_cd(x,a,b,c),-var_ab_cross_cd(y,a,b,c)])
 

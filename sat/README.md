@@ -1,6 +1,5 @@
 This repository contains supplemental material to the article 
 "Investigating Simple Drawings of $K_n$ using SAT"
-by Helena Bergold and Manfred Scheucher
 
 
 # Installation
@@ -9,8 +8,11 @@ To run the framework `pysat` needs to be installed,
 see https://pysathq.github.io/installation/
 
 Optional: 
+
 - `cadical`: https://github.com/arminbiere/cadical 
+
 - `drat-trim`: https://github.com/marijnheule/drat-trim
+
 - `SageMath`: https://www.sagemath.org/
 
 
@@ -19,10 +21,10 @@ Optional:
 #  Overall Description
 
 The python program `rotsys.py` comes with a mandatory parameter `n` for the number of vertices and several optional parameters.
-The program creates a SAT instance
+The program creates a SAT instance (CNF)
 and then uses the Python interfaces `pycosat`  and  `PySAT` to run the
 SAT solver `PicoSAT`, version 965, and `CaDiCaL`, version 1.5.3, respectively.
-As default, we use the solver CaDiCaL because it is more efficient.
+As default, we use the solver CaDiCaL because as it is more efficient.
 The output of the program is then either a rotation system with the desired properties 
 (which is obtained from parsing the variable assignment of a solution to the instance) 
 or, if the instance is unsatisfiable, it prints that no solution exists.
@@ -34,11 +36,13 @@ we can ask the solver for a certificate and use the independent proof checking t
 More specifically,
 we can use the parameter `-o` to export the CNF to a specified file, which has the DIMACS file format.
 By running
+
 ```
     cadical -q --unsat instance.cnf instance.proof
 ```
 CaDiCaL exports a DRAT proof which certificates the unsatisfiability.
 The correctness of the DRAT proof can then be verified with 
+
 ```
     drat-trim instance.cnf instance.proof -t 999999
 ```
@@ -47,15 +51,14 @@ which is quite low by default.
 
 In the following, 
 we will only describe how to use the program `rotsys.py`
-to show certain statements and
-omit the explicit commands to certifying unsatisfiability.
+with its parameters. 
 
 
 
 
 # Parameters 
 
-- `-n`: number of elements
+- `n`: number of elements (mandatory)
 
 - `-a` or `--all`: enumerate all configurations
 
@@ -83,7 +86,7 @@ omit the explicit commands to certifying unsatisfiability.
 
 - `-HC+` or `--forbidHCplus`: forbid plane Hamiltonian subgraphs on 2n-3 edges
 
-- `-HT+` or `--HoffmannTothplus`: check strengthened Hoffmann-Toth property
+- `-HT+` or `--HoffmannTothplus`: check strengthened Hoffmann-Toth property, i.e. a matching which is not crossed by a Hamiltonian cycle
 
 - `--forbidAllPairsHP`: assume that for a pair of vertices there is no plane Hamiltonian path
 
