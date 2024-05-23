@@ -90,7 +90,7 @@ with its parameters.
 
 - `--forbidAllPairsHP`: assume that for a pair of vertices there is no plane Hamiltonian path
 
-- `--emptycycles k`: forbid empty $k$-cycles 
+- `-ec k` or `--emptycycles k`: forbid empty $k$-cycles 
 
 - `-aec`: assert that all edges are crossed
 

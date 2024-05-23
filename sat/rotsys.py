@@ -37,7 +37,7 @@ parser.add_argument("-HT+","--HoffmannTothplus",type=int, help="check strengthen
 
 parser.add_argument("--forbidAllPairsHP",action='store_true', help="assume that for a pair of vertices there is no plane Hamiltonian path")
 
-parser.add_argument("--emptycycles",type=int,help="forbid empty cycles of specified size")
+parser.add_argument("-ec","--emptycycles",type=int,help="forbid empty cycles of specified size")
 
 
 parser.add_argument("-aec","--alledgescrossed",action='store_true', help="assert that all edges are crossed")
