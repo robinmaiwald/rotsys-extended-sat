@@ -1,8 +1,8 @@
 #!/bin/bash --login
-#SBATCH --array 1-10000
+#SBATCH --array 1001-2000
 #SBATCH --time=168:00:00
-#SBATCH -J hc11b
-#SBATCH -o _log_hc11b.%a.out
+#SBATCH -J hc11b1
+#SBATCH -o _log_hc11b1.%a.out
 echo "test cubes11b/part.$SLURM_ARRAY_TASK_ID"
 cat instance_11_HC.inccnf cubes11b/part.$SLURM_ARRAY_TASK_ID | cadical
 # create CNF with "python rotsys.py -HC 11 -o instance_11_HC.inccnf"
