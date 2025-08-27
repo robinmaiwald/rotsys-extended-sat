@@ -24,9 +24,9 @@ ________________________________________________________________________________
 
 Once again I do not take credit for the framework but the parameters I added. I will list them (all) here soon:
 
-Parameters added my Robin Maiwald
--delPM
--fixMUP    (Will be in the clean version)
+Parameters added my Robin Maiwald \n
+-delPM                             \n
+-fixMUP    (Will be in the clean version) \n
 -fixMLow   (Will be in the clean version)
 -octFix
 -goodOcta  (Will be in the clean version)
