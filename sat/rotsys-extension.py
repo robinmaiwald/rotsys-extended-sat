@@ -1,4 +1,4 @@
-""" An extension of Manfreds Scheuchers SAT framework, used my Bachelor Thesis
+""" An extension of Manfreds Scheuchers SAT framework, used in my Bachelor Thesis
     "Kreuzungszahlen von fast vollständigen Graphen"
 """
 
