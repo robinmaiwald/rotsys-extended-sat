@@ -28,7 +28,7 @@ Parameters added my Robin Maiwald
 - delPM                                 
 - fixMUP    (Will be in the clean version)    
 - fixMLow   (Will be in the clean version)    
-- octFix  
+- octaFix  
 - goodOcta  (Will be in the clean version)    
 - goodCross  
 ________________________________________________________________________________________________________________________________________________________
