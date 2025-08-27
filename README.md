@@ -11,14 +11,15 @@ I used this Framework to study properties of almost complete graphs (complete gr
 For this is extended the framework by creating additional parameters.  
 The diffrence between this project and the  one on Manfreds Scheucher GitHub is that I added additional Parameters to rotsys.py  
 So what did I do exactly:  
-I cloned his project and replaced the rotsys.py file with my rotsys-extended.py   
+I cloned his project and added rotsys-extension.py - an extension of his version rotsys.py.  
+For transparency I left the original rotsys.py.  
 I did this so I could link the project in my thesis and in case someone is intrested in the additonal parameters.  
 
 ________________________________________________________________________________________________________________________________________________________
 
 Due to time resaons I have not added the Instructions yet.  
 I will do so and then note it here.  
-Also I am planing to create a "cleaner" version of rotsys-extended.py within the next week(s)? I will also note this here  
+Also I am planing to create a "cleaner" version of rotsys-extension.py within the next week(s)? I will also note this here  
 Also I plan on marking all sections done by me in the rotsys-extended.py   
 ________________________________________________________________________________________________________________________________________________________
 
