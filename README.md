@@ -26,10 +26,10 @@ Once again I do not take credit for the framework but the parameters I added. I 
 
 Parameters added my Robin Maiwald
 -delPM
--fixMUP   (Will be in the clean version)
--fixMLow  (Will be in the clean version)
+-fixMUP    (Will be in the clean version)
+-fixMLow   (Will be in the clean version)
 -octFix
--goodOcta (Will be in the clean version)
+-goodOcta  (Will be in the clean version)
 -goodCross
 ________________________________________________________________________________________________________________________________________________________
 
