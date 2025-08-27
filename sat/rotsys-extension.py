@@ -1,6 +1,10 @@
 """
 	A SAT framework for simple drawings, a part of the article
 	"Investigating Simple Drawings of $K_n$ using SAT"
+ 
+"""
+""" An extension of Manfreds Scheuchers SAT framework, used my Bachelor Thesis
+    "Kreuzungszahlen von fast vollständigen Graphen"
 """
 
 
