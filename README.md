@@ -1,9 +1,9 @@
 __IMPORTANT NOTE__
 ________________________________________________________________________________________________________________________________________________________
 
-The SAT-Framework in this project was designed by Manfred Scheucher (and Helena Bergold?)
-Link to the original project which is cloned: https://github.com/manfredscheucher/rotsys-sat/tree/main  
-All Credit regarding the creation of this framework belongs to him (and her?).  
+The SAT-Framework in this project was designed by Manfred Scheucher (and Helena Bergold?)  
+Link to the original project which is cloned: https://github.com/manfredscheucher/rotsys-sat/tree/main    
+All Credit regarding the creation of this framework belongs to him (and her?).    
 ________________________________________________________________________________________________________________________________________________________
 ________________________________________________________________________________________________________________________________________________________
 
