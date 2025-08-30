@@ -23,14 +23,7 @@ Also I am planing to create a "cleaner" version of rotsys-extension.py within th
 Also I plan on marking all sections done by me in the rotsys-extended.py   
 ________________________________________________________________________________________________________________________________________________________
 
-Once again I do not take credit for the framework but the parameters I added. I will list them (all) here soon:  
 
-Parameters added my Robin Maiwald    
-- delPM                                 
-- fixMUP    (Will be in the clean version)    
-- fixMLow   (Will be in the clean version)    
-- octaFix  
-- goodOcta  (Will be in the clean version)    
-- goodCross  
+
 ________________________________________________________________________________________________________________________________________________________
 
