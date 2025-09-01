@@ -68,19 +68,13 @@ parser.add_argument("--solver", choices=['cadical', 'pycosat'], default='cadical
 
 parser.add_argument("-D","--debug", action='store_true',help="debug mode")
 
+parser.add_argument("-fixMLow",nargs="+",type=str,help="delets a fixed matching and sets Lower bound for crossingnumber. Usage: -fixMLow 'matching' bound ")
+parser.add_argument("-fixMUp",nargs="+",type=str,help="delets a fixed matching and sets upper bound for crossingnumber. Usage: -fixMUp 'matching' bound ")
+parser.add_argument("-twoColor",action='store_false',help="remove assumption that two Colow Crossings are forbidden (enabled by default, use parameter to disable)")
 
-#______________HIER KOMMT MEIN CODE______________
-parser.add_argument("-delM", nargs="+", type=int, help="deletes a matching of size k and compares remaining crossingnumber to chosen bound")
-parser.add_argument("-delPM",nargs="?",const=True,type=int,help="delets a perfect matching of size n/2 compares crossingnumber to 6(n over 4) or input ")
-parser.add_argument("-fixM",nargs="+",type=str,help="delets a fixed (perfect) matching of size compares crossingnumber. Usage: -fixM 'matching' bound ")
-parser.add_argument("-apol",action='store_true',help="asserts that no antipolar pair exists")
-parser.add_argument("-apolPM",action='store_true',help="asserts that no antipolar pair exists that is part part of deleted perfect matching")
-parser.add_argument("-apolFix",action='store_true',help="asserts that no antipolar pair exists that is part of deleted fixed perfect matching")
-parser.add_argument("-octa",action='store_true',help="ensure that any 3 edges from PM of delPM induce a crossingfree octahedron")
-#parser.add_argument("-octaFix",action='store_true',help="ensure that any 3 edges from fixed PM of -delFix induce a crossingfree octahedron")
-parser.add_argument("-octaFix", nargs='?',const=1,type=int,default=None,help="Ensure that at least one Octahedron induced by 3 deleted edges has exactly k crossings (default: 1 if used without argument)")
-parser.add_argument("-octaFixOld", nargs='?',const=1,type=int,default=None,help="Ensures that in all possible Octahedrons induced by 3 edges from the matching, there exist at leat k crossings (default 1)")
-parser.add_argument("-goodCross", type=int, default=None, help="Require exactly this many 'good' crossings (only with -fixM and -octaFix)")
+parser.add_argument("-octaFix", nargs='?',const=1,type=int,default=None,help="Ensure that at least one Octahedron induced by 3 deleted edges has exactly k crossings (default: 1)")
+parser.add_argument("-goodOcta", nargs='?',const=1,type=int,default=None,help="Ensures that in all induced octahedrons, there exist atleast k crossings (default 2)")
+parser.add_argument("-goodCross", type=int, default=None, help="Require exactly this many 'good' crossings (only with -fixMLow/Up and -octaFix combined)")
 
 
 args = parser.parse_args()
@@ -154,9 +148,6 @@ def mcross(a,b,c,d):
     if a>c: return mcross(c,d,a,b)
     return vpool.id(f"C'{a}_{b}_{c}_{d}")
    
-def antipodal_a1_a2(a1,a2):
-    if a1 > a2: return antipodal_a1_a2(a2,a1)
-    return vpool.id(f"A{a1}_{a2}")
 
 def octahedron(a1,b1,a2,b2,a3,b3):
     if a1>b1: return octahedron(b1,a1,a2,b2,a3,b3)
@@ -171,7 +162,6 @@ var_ab_cross_cd_ =          {(a,b,c,d):cross(a,b,c,d) for a,b,c,d in permutation
 var_ab_cross_cd_directed_ = {(a,b,c,d):dcross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
 all_edges_ =                {(a,b): edge_exists(a,b) for a,b in permutations(all_vertices,2)}
 var_ab_cross_cd_masked_ =   {(a,b,c,d):mcross(a,b,c,d) for a,b,c,d in permutations(all_vertices,4)}
-antipodal_a1_a2_ =          {(a1,a2): antipodal_a1_a2(a1,a2) for a1,a2 in permutations(all_vertices,2)}
 octahedrons_ =              {(a,b,c,d,e,f): octahedron(a,b,c,d,e,f) for a,b,c,d,e,f in permutations(all_vertices,6)}
 deleted_perfect_matchings = []
 
@@ -179,9 +169,9 @@ deleted_perfect_matchings = []
 
 def var_ab_cross_cd(*I): return var_ab_cross_cd_[I]
 def var_ab_cross_cd_directed(*I): return var_ab_cross_cd_directed_[I]
-def edgeCheck(*I): return all_edges_[I]
 def var_ab_cross_cd_masked(*I): return var_ab_cross_cd_masked_[I] 
-def apolCheck(*I): return antipodal_a1_a2_[I]
+
+def edgeCheck(*I): return all_edges_[I]
 def octaCheck(*I): return octahedrons_[I]
 
 
@@ -629,35 +619,24 @@ if args.etupp != None:
 
                     #print(var_ab_cross_cd_)
         
-if args.crlow != None or args.crupp != None or args.delM != None:
+if args.crlow != None or args.crupp != None:
     crossing_vars = [var_ab_cross_cd(a,b,c,d) for (a,b,c,d) in permutations(N,4) if a<b and c<d and a<c]
-    #print("crossing_vars",crossing_vars)
 
-if args.delM != None:
+if args.fixMLow != None or args.fixMUp != None:
     edge_vars = [edgeCheck(a,b) for (a,b) in permutations(N,2) if a<b]
     masked_crossing_vars = [var_ab_cross_cd_masked(a,b,c,d) for (a,b,c,d) in permutations(N,4) if a<b and c<d and a<c]
 
-if args.delPM:
-    edge_vars = [edgeCheck(a,b) for (a,b) in permutations(N,2) if a<b]
-    deleted_edge_vars = [-e for e in edge_vars]                                   #  literals negated: true means edge deleted
-    masked_crossing_vars = [var_ab_cross_cd_masked(a,b,c,d) for (a,b,c,d) in permutations(N,4) if a<b and c<d and a<c]
+    if args.fixMLow != None:
+        deleted_edges = set(literal_eval(args.fixMLow[0]))
+    
+    if args.fixMUp != None:
+        deleted_edges = set(literal_eval(args.fixMUp[0]))
 
-if args.fixM != None:
-    edge_vars = [edgeCheck(a,b) for (a,b) in permutations(N,2) if a<b]
-    masked_crossing_vars = [var_ab_cross_cd_masked(a,b,c,d) for (a,b,c,d) in permutations(N,4) if a<b and c<d and a<c]
-
-    deleted_edges = set(literal_eval(args.fixM[0]))
     deleted_edges = set((min(a, b), max(a, b)) for a, b in deleted_edges)
     remaining_edges = set([(a,b) for a,b in combinations(N,2) if a<b and (a,b) not in deleted_edges])
     all_edges = remaining_edges | deleted_edges 
 
 
-if args.apol:
-    antipodal_vars = [apolCheck(a,b) for (a,b) in permutations(N,2) if a<b]
-
-if args.apolPM:
-    antipodal_vars = [apolCheck(a,b) for (a,b) in permutations(N,2) if a<b]
-    perfect_matching = []
 
 if args.crlow != None:
     print ("(crlow) minimum number of crossings:",args.crlow,len(constraints))
@@ -752,13 +731,9 @@ if 0:
     cube = [449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,-464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,-479,480,481,482,483,484,485,486,487,488,-489,490,491,492,493,494,-495,496,497,498,499,500,-501,-502,503,504]
     for x in cube: constraints.append([x])
 
-#______________________________________________________________________________________________________________________________________________________________________
-#Defining Boolean Variables to show if an edge exist or not (for deleting up to one perfect matching)
 
+if args.fixMLow or args.fixMUp:
 
-if args.fixM:
-
-    # forces all edges in the matching to be false and the other to be true
     for (u,v) in remaining_edges:
         edge_var = edgeCheck(u,v)
         constraints.append([edge_var])
@@ -767,18 +742,26 @@ if args.fixM:
         edge_var = edgeCheck(u,v)
         constraints.append([-edge_var])
 
-    # now compute masked crossings for existing edges (not deleted)
-    if len(args.fixM) == 2:
-        deleted_crossing_bound = int(args.fixM[1])
-    else:
-        deleted_crossing_bound = 6 * math.comb(int(n/2), 4)
+    if args.fixMLow:
+        if len(args.fixMLow) == 2:
+            lower_crossing_bound = int(args.fixMLow[1])
+        else:
+            lower_crossing_bound = 6 * math.comb(int(n/2), 4)
 
-    print(f"(fixM) deleting fixed matching: {deleted_edges} of size: {len(deleted_edges)}")
-    print(f"(fixM) upper bound for crossings in Kn-PM: {deleted_crossing_bound}")
+    if args.fixMUp:
+        if len(args.fixMUp) == 2:
+            upper_crossing_bound = int(args.fixMUp[1])
+        else:
+            upper_crossing_bound = 6 * math.comb(int(n/2), 4)
 
-    #deleted_edges is a set with all edges who got removes (are in the matching)
-    #remaining_edges is a set with all edges which still remain in the graph
-    #all_edges is a set with all edges
+    if args.fixMLow:
+        print(f"(fixMLow) deleting fixed matching: {deleted_edges} of size: {len(deleted_edges)}")
+        print(f"(fixMLow) lower bound for crossings in Kn-I: {lower_crossing_bound}")
+
+    if args.fixMUp:
+        print(f"(fixMUp) deleting fixed matching: {deleted_edges} of size: {len(deleted_edges)}")
+        print(f"(fixMUp) upper bound for crossings in Kn-I: {upper_crossing_bound}")
+
 
     for (a, b), (c, d) in combinations(all_edges, 2):
         if len({a, b, c, d}) < 4: continue
@@ -788,170 +771,49 @@ if args.fixM:
         edge_cd = edgeCheck(c, d)
         masked_var = var_ab_cross_cd_masked(a, b, c, d)
 
-        # masked_var <-> (cross_var ∧ edge_ab ∧ edge_cd)
-        constraints.append([-masked_var, cross_var])                # masked_var → cross_var
-        constraints.append([-masked_var, edge_ab])                  # masked_var → edge_ab
-        constraints.append([-masked_var, edge_cd])                  # masked_var → edge_cd
-        constraints.append([-cross_var, -edge_ab, -edge_cd, masked_var])  # (cross_var ∧ edge_ab ∧ edge_cd) → masked_var
+        constraints.append([-masked_var, cross_var])                
+        constraints.append([-masked_var, edge_ab])                 
+        constraints.append([-masked_var, edge_cd])                 
+        constraints.append([-cross_var, -edge_ab, -edge_cd, masked_var])  
 
-    # Limit the number of masked crossings
-    constraints += list(CardEnc.atmost(lits=masked_crossing_vars,bound=deleted_crossing_bound,encoding=EncType.totalizer,vpool=vpool,))
-    # Forbids 2-Color-Crossings
+    if args.fixMLow:
+        constraints += list(CardEnc.atleast(lits=masked_crossing_vars,bound=lower_crossing_bound,encoding=EncType.totalizer,vpool=vpool,))
 
-    for (a, b), (c, d) in combinations(deleted_edges, 2):
-        constraints.append([-var_ab_cross_cd(a, c, b, d)])
-        constraints.append([-var_ab_cross_cd(a, d, b, c)])
-
-
-
-
-if args.delM != None:
-
-    print(f"(delM) deleting matching of size: {args.delM[0]}")
-
-    edge_vars_set = set(edge_vars)                                                         #Faster to look up value in set     
-    num_edges_remaining = len(edge_vars_set) - args.delM[0]                                
-    constraints += list(CardEnc.atleast(lits=edge_vars_set,bound=num_edges_remaining,vpool=vpool,encoding=EncType.totalizer))
-    if len(args.delM) > 1:
-        deleted_crossing_bound = args.delM[1]
-    else:
-        deleted_crossing_bound = 6* math.comb(int(n/2),4)                                      #This number is the potential lower bound for Kn-M                                    
-
-    print(f"(*) maximum number of crossings in Kn-M: {deleted_crossing_bound}")
-
-    for (a,b),(c,d) in combinations(all_edges_.keys(),2):
-        if len({a, b, c, d}) < 4: continue
-        cross_var = var_ab_cross_cd(a,b,c,d)
-        edge_ab = edgeCheck(a,b)
-        edge_cd = edgeCheck(c,d)
-        masked_var = var_ab_cross_cd_masked(a,b,c,d)
-
-        # masked_var <->     (cross_var ∧ edge_ab ∧ edge_cd)
-        constraints.append([-masked_var, cross_var])                                # (1) masked_var -> cross_var
-        constraints.append([-masked_var, edge_ab])                                  # (2) masked_var -> edge_ab
-        constraints.append([-masked_var, edge_cd])                                  # (3) masked_var -> edge_cd
-        constraints.append([-cross_var, -edge_ab, -edge_cd, masked_var])            # (4) (cross_var ∧ edge_ab ∧ edge_cd) -> masked_var
+    if args.fixMUp:
+        constraints += list(CardEnc.atmost(lits=masked_crossing_vars,bound=upper_crossing_bound,encoding=EncType.totalizer,vpool=vpool,))
     
-    constraints += list(CardEnc.atmost(lits=masked_crossing_vars,bound=deleted_crossing_bound,encoding=EncType.totalizer,vpool=vpool))
-
-
-if args.delPM:                      #Can be called with argument for specific lower crossing bound - default value is 6*(n/2 choose 4)
-
-    print(f"(delPM) deleting perfect matching of size: {int(n/2)}")
-
-    deleted_edge_vars_set = set(deleted_edge_vars)
-    pm_size = int(n // 2) 
-    # Exactly n/2 edges deleted
-    constraints += list(CardEnc.equals(lits=deleted_edge_vars_set,bound=pm_size,vpool=vpool,encoding=EncType.totalizer))
-
- # For each vertex, exactly one incident edge is deleted (so deleted edges form a perfect matching)
-    for v in all_vertices:
-        incident_deleted = []
-        for (a, b) in permutations(N, 2):
-            if a < b and (a == v or b == v):
-                incident_deleted.append(-edgeCheck(a, b))
-        incident_deleted = set(incident_deleted)                    #Faster to look up values in set?
-        constraints += list(CardEnc.atmost(lits=incident_deleted,bound=1,vpool=vpool,encoding=EncType.totalizer))
-
-    # Now compute masked crossings for existing edges (not deleted)
-    if args.delPM is True:
-        deleted_crossing_bound = 6 * math.comb(int(n//2), 4)
+    
+    # Forbids 2-Color-Crossings
+    if args.twoColor is True:
+        for (a, b), (c, d) in combinations(deleted_edges, 2):
+            constraints.append([-var_ab_cross_cd(a, c, b, d)])
+            constraints.append([-var_ab_cross_cd(a, d, b, c)])
+        print(f"(twoColor) two color crossings are forbidden")
     else:
-        deleted_crossing_bound = args.delPM
-    print(f"(delPM) upper bound for crossings in Kn-PM: {deleted_crossing_bound}")
-
-    for (a,b),(c,d) in combinations(all_edges_.keys(),2):
-        if len({a, b, c, d}) < 4: continue
-        cross_var = var_ab_cross_cd(a, b, c, d)
-        edge_ab = edgeCheck(a, b)
-        edge_cd = edgeCheck(c, d)
-        masked_var = var_ab_cross_cd_masked(a, b, c, d)
-
-        # masked_var <-> (cross_var ∧ edge_ab ∧ edge_cd)
-        constraints.append([-masked_var, cross_var])                # masked_var → cross_var
-        constraints.append([-masked_var, edge_ab])                  # masked_var → edge_ab
-        constraints.append([-masked_var, edge_cd])                  # masked_var → edge_cd
-        constraints.append([-cross_var, -edge_ab, -edge_cd, masked_var])  # (cross_var ∧ edge_ab ∧ edge_cd) → masked_var
+        print(f"(twoColor) two color crossings are allowed")
 
 
-    # Limit the number of masked crossings
-    constraints += list(CardEnc.atmost(lits=masked_crossing_vars,bound=deleted_crossing_bound,encoding=EncType.totalizer,vpool=vpool))
+if args.goodOcta is not None:
 
-
-if args.octa:                   #Should only be used when -delPM is used aswell, otherwise might not give desired results?
-    print("(octa) enforcing octahedral non-planarity for the deleted perfect matching")
-
-    for (a1, b1), (a2, b2), (a3, b3) in combinations(combinations(N, 2), 3):
-        octahedron_vertices = {a1, b1, a2, b2, a3, b3}
-        if len(octahedron_vertices) < 6: continue 
-        #print(f"a1,b1: {(a1,b1)}, a2,b2: {(a2,b2)}, a3,b3: {(a3,b3)}")
-
-        e1_var = edgeCheck(a1,b1)
-        e2_var = edgeCheck(a2,b2)
-        e3_var = edgeCheck(a3,b3)
-        #print(f"e1: {e1_var}, e2: {e2_var}, e3: {e3_var}")
-
-        # New auxiliary variable to represent "this triple is part of the deleted PM"
-        oct_var = octaCheck(a1,b1,a2,b2,a3,b3)
-        #print(f"octa: {oct_var}")
-
-        # oct_var ⇔ (¬e1 ∧ ¬e2 ∧ ¬e3)
-        constraints.append([-oct_var, -e1_var])
-        constraints.append([-oct_var, -e2_var])
-        constraints.append([-oct_var, -e3_var])
-        constraints.append([e1_var, e2_var, e3_var, oct_var])
-
-       # Build list of crossings between remaining edges among the 6 octahedron_vertices
-        #octahedron_vertices = [a1, b1, a2, b2, a3, b3]
-        octahedron_edges = [(u, v) for u, v in combinations(octahedron_vertices, 2) if u < v and (u, v) not in [(a1, b1), (a2, b2), (a3, b3)]]
-
-        octahedron_crossing_vars = []
-        for (u1, v1), (u2, v2) in combinations(octahedron_edges, 2):
-            if len({u1, v1, u2, v2}) < 4: continue
-
-            cross_var = var_ab_cross_cd(u1, v1, u2, v2)
-            octahedron_crossing_vars.append(cross_var)
-
-        # At least one crossing must exist if this octahedron is active (i.e., deleted PM edges selected)
-        octahedron_crossing_vars = set(octahedron_crossing_vars)                                #Faster to look up Value in sets
-        if octahedron_crossing_vars:
-            temp_min_clause = CardEnc.atleast(lits=octahedron_crossing_vars,bound=1,encoding=EncType.totalizer,vpool=vpool)
-            # Add each constraint gated by oct_var
-            for clause in temp_min_clause:
-                constraints.append([-oct_var] + clause)
-
-#Eensures that there is no crossing between all octahedrons which are induced by the subgraph of 3 deleted edges (only good crossings!)
-
-#Eensures that there is no crossing between all octahedrons which are induced by the subgraph of 3 deleted edges (only good crossings!)
-
-#Ensures that there is no crossing between all octahedrons which are induced by the subgraph of 3 deleted edges (only good crossings!)
-if args.octaFixOld is not None:
-
-    octa_cross_bound = args.octaFix
-
-    print("(octaFix) enforcing octahedral non-planarity for the fixed perfect matching")
-
-    octa_Fix_crossing_vars = []             #list with all crossing_vars of all octaeder
+    octa_cross_bound = args.goodOcta
+    print("(goodOcta) enforcing atleast {octa_cross_bound} in all octahedrons combined")
+    octa_Fix_crossing_vars = []          
 
     for (a1, b1), (a2, b2), (a3, b3) in combinations(deleted_edges, 3):
         octahedron_vertices = {a1, b1, a2, b2, a3, b3}
         if len(octahedron_vertices) < 6: continue
 
-        # Collect edges among those 6 vertices, excluding the 3 fixed matching edges
         octahedron_edges = [(u, v) for u, v in combinations(octahedron_vertices, 2)
                             if (u, v) not in [(a1, b1), (a2, b2), (a3, b3)]
                             and (v, u) not in [(a1, b1), (a2, b2), (a3, b3)] and u<v]
-        #print(f"Vertices of Octaeder: {a1,b1,a2,b2,a3,b3}")
-        #print(f"Edges of Octaeder: {octahedron_edges}")
 
         for (u1, v1), (u2, v2) in combinations(octahedron_edges, 2):
-            if len({u1, v1, u2, v2}) < 4: continue  # if edges are adjacent they cant cross (simple drawing)
-            #print(f"Checking crossing for edges: {(u1,v1),(u2,v2)}")
+            if len({u1, v1, u2, v2}) < 4: continue  
             octa_Fix_crossing_vars.append(var_ab_cross_cd(u1, v1, u2, v2))
 
     if octa_Fix_crossing_vars:
-        # ENforce that at least one octaeder has a crossing
         constraints += list(CardEnc.atleast(lits=octa_Fix_crossing_vars,bound=octa_cross_bound,encoding=EncType.totalizer,vpool=vpool))
+
 
 if args.octaFix is not None:
     octa_cross_bound = args.octaFix
@@ -961,53 +823,44 @@ if args.octaFix is not None:
 
     for (a1, b1), (a2, b2), (a3, b3) in combinations(deleted_edges, 3):
         octa_vertices = (a1, b1, a2, b2, a3, b3)
-        if len(octa_vertices) < 6: continue  # skip invalid combinations
+        if len(octa_vertices) < 6: continue  
 
         exact_k_var = octaCheck(*octa_vertices)
         satisfying_octa_vars.append(exact_k_var)
 
-        # Determine which edges in this octahedron may cross (excluding the matching)
         fixed_edges = {(a1, b1), (a2, b2), (a3, b3)}
         octa_edges = [(u, v) for u, v in combinations(octa_vertices, 2) if (u, v) not in fixed_edges and (v,u) not in fixed_edges]
 
         octa_crossing_vars = []
         for (u1, v1), (u2, v2) in combinations(octa_edges, 2):
-            if len({u1, v1, u2, v2}) < 4: continue  # skip adjacent edges
+            if len({u1, v1, u2, v2}) < 4: continue 
             octa_crossing_vars.append(var_ab_cross_cd(u1, v1, u2, v2))
 
-        if not octa_crossing_vars: continue  # no meaningful octahedron here
+        if not octa_crossing_vars: continue  
 
         # Create guarded cardinality encoding: "if exact_k_var → exactly k crossings"
         card = CardEnc.equals(lits=octa_crossing_vars,bound=octa_cross_bound,encoding=EncType.totalizer,vpool=vpool)
 
-        # Forward direction: exact_k_var ⇒ exactly-k-crossings
-        # Add ¬exact_k_var to each clause in the cardinality constraint
         for clause in card.clauses:
             constraints.append(clause + [-exact_k_var])
 
-
-    # Enforce: at least one octahedron satisfies the condition
     if satisfying_octa_vars:
-        constraints.append(satisfying_octa_vars)  # OR over all exact_k_var
+        constraints.append(satisfying_octa_vars)  
     else:
         print("Warning: no valid octahedrons could be constructed from deleted edges.")
 
 
 
 
-if args.goodCross is not None and args.fixM is not None and args.octaFix is not None:
-    # deleted_edges is already a set of 3 edges (ordered pairs)
-    matching_edges = list(deleted_edges)
-    print(f"(goodCross) using deleted matching edges: {matching_edges}")
+if args.goodCross is not None and (args.fixMUp is not None or args.fixMLow is not None) and args.octaFix is not None:
 
-    # find apex vertex: the one not in the matching
+    matching_edges = list(deleted_edges)
     all_matching_vertices = set(v for e in deleted_edges for v in e)
     apex_vertex = [v for v in all_vertices if v not in all_matching_vertices][0]
-    #print(f"(goodCross) apex vertex: {apex_vertex}")
+
 
     good_cross_vars = []
 
-    # generate all possible good crossings: apex x one vertex from each matching edge
     for v_apex in [apex_vertex]:
         e1 = matching_edges[0]
         e2 = matching_edges[1]
@@ -1016,117 +869,21 @@ if args.goodCross is not None and args.fixM is not None and args.octaFix is not 
         for a in e1:
             for b in e2:
                 for c in e3:
-                    # three edges formed by apex with each chosen vertex
-                    var1 = var_ab_cross_cd_masked(v_apex, a, b, c)  # crossing: (apex,a) x (b,c)
-                    var2 = var_ab_cross_cd_masked(v_apex, b, a, c)  # crossing: (apex,b) x (a,c)
-                    var3 = var_ab_cross_cd_masked(v_apex, c, a, b)  # crossing: (apex,c) x (a,b)
-                    # append all variants (depends on how your crossing vars are defined)
+                    var1 = var_ab_cross_cd_masked(v_apex, a, b, c)  
+                    var2 = var_ab_cross_cd_masked(v_apex, b, a, c) 
+                    var3 = var_ab_cross_cd_masked(v_apex, c, a, b)  
                     good_cross_vars += [var1, var2, var3]
-                   # print(f"(goodCross) combination: {apex_vertex}{a}{b}{c}")
 
     print(f"(goodCross) total good crossing candidates: {len(good_cross_vars)}")
 
     if good_cross_vars:
         print(f"(goodCross) enforcing exactly {args.goodCross} good crossings")
         constraints += list(CardEnc.equals(lits=good_cross_vars,bound=args.goodCross,encoding=EncType.totalizer,vpool=vpool))
-        print(f"(goodCross) total constraints now: {len(constraints)}")
 
 
-
-
-#Arg apol forces no antipodal pair in the Graph. 
-#A pair or 2 vertices (u,v) is antipodal, iff their stars (stra(u), star(v)) do not cross each other
-if args.apol:
-    
-    print("(apol) forbidding antipodal pairs in the graph")
-
-    for a1, a2 in combinations(all_vertices,2):    
-        apol_var = apolCheck(a1,a2)
-        #print(f"Checking if: {a1,a2} is an antipdoal pair")
-        
-        one_edge_or_antipodal_clause = []               #Clause that ensures that either one pair of edges of both stars cross, or the pair is antipodal
-        for b,c in permutations(all_vertices,2):
-            if b == a1 or b == a2: continue             #No adjacent vertices and self-edges
-            if c == a1 or c == a2: continue             #No adjacent vertices and self-edges
-            
-            cross_var = var_ab_cross_cd(a1,b,a2,c)           #Boolen Variable stating if 2 edges cross
-
-            if args.delM != None or args.delPM:                     #If we delete a Matching, Crossings only get considered if both edges still exist
-                edge_ab = edgeCheck(a1, b)
-                edge_cd = edgeCheck(a2, c)
-
-                masked_cross = mcross(a1,b,a2,c)
-                constraints.append([-apol_var, -masked_cross])  # A{a1}_{a2} -> masked crossing false
-                one_edge_or_antipodal_clause.append(masked_cross)
-
-            else: 
-                constraints.append([-apol_var,-cross_var])            #A{a1}_{a2} antipodal -> (a1,b) (a2,c) do not cross
-                one_edge_or_antipodal_clause.append(cross_var)
-
-        constraints.append(one_edge_or_antipodal_clause + [apol_var])        
-        constraints.append([-apol_var])  # Force each A_{a1}_{a2} to be False
-
-#apolFix is to be used with fixM only, forces that there are no antipodal pairs in the matching only use with -fixM
-#I think this is not needed Showing that for a fixed 
-if args.apolFix:
-    print("(apolFix) forcing all PM pairs to be non-antipodal, checking for contradiction")
-
-    for (a1, a2) in deleted_edges:
-        apol_var = apolCheck(a1, a2)
-
-        # Force apol_var to be False
-        constraints.append([-apol_var])  # Assume: (a1,a2) is not antipodal
-
-        # Then ensure their stars DO cross: ¬apol(a1,a2) ⇒ ∃ crossing
-        one_cross_clause = []
-
-        for b, c in permutations(all_vertices, 2):
-            if b in (a1, a2) or c in (a1, a2): continue
-
-            masked_cross_var = mcross(a1, b, a2, c)
-            one_cross_clause.append(masked_cross_var)
-
-        # ¬apol ⇒ at least one cross ⇒ OR clause over crossings
-        constraints.append(one_cross_clause)  # if no crossing ⇒ apol must be true ⇒ contradiction
-
-
-
-#apolPM forces to antipodal pairs in the perfect matching. Only use with args.delPM otherwise might not work
-if args.apolPM:
-    print("(apolPM) forbidding antipodal pairs in the deleted perfect matching")
-
-    for a1, a2 in combinations(all_vertices, 2):
- 
-        edge_var = edgeCheck(a1, a2)                    #edge_var is only false, if its`s in the perfect matching
-        apol_var = apolCheck(a1, a2)                    
-
-        crossing_clause = []
-        for b, c in permutations(all_vertices, 2):
-            if b == a1 or b == a2: continue             #No adjacent vertices and self-edges
-            if c == a1 or c == a2: continue             #No adjacent vertices and self-edges
-
-            cross_var = var_ab_cross_cd(a1, b, a2, c)
-
-            if args.delPM or args.delM is not None:
-                masked_cross = mcross(a1, b, a2, c)
-                constraints.append([-apol_var, -masked_cross])
-                crossing_clause.append(masked_cross)
-            else:
-                constraints.append([-apol_var, -cross_var])
-                crossing_clause.append(cross_var)
-
-        constraints.append(crossing_clause + [apol_var])
-
-        # Enforce: if (a1,a2) is in matching (i.e. deleted), then it must not be antipodal
-        constraints.append([edge_var, -apol_var])  # (¬edge(a1,a2)) → ¬apol(a1,a2)
-
-
-#_________________________________________________________________________________________________________________________________________________________________________
 print ("Total number of constraints:",len(constraints))
 time_before_solving = datetime.datetime.now()
 print("creating time:",time_before_solving-time_start)
-
-
 
 
 if args.var2file:
@@ -1204,32 +961,15 @@ else:
             
         ct += 1
         sol = set(sol) # it's faster to lookup values in set than in list
-        if args.apol or args.apolPM:
         
-            #Set with all Antipodal Pairs in the Graph ? 
-            antipodal_pairs = set()
-            for var in antipodal_vars:
-                if var in sol:
-                    antipodal_pairs.add(vpool.id2obj.get(var))
-            print(f"All antipodal Pairs: {antipodal_pairs}")
-        #Set with all Crossings accuring in the Graph
 
-     #   if crossing_vars:
-      #      #creates a set with all accuring crossings in C{a}_{b}_{c}_{d} style
-       #     crossings_in_sol = set()
-        #    for crossing in crossing_vars:
-         #       if crossing in sol:
-          #          crossings_in_sol.add(vpool.id2obj.get(crossing))
-#______________________________________________________________________________________________________________________________________________________________
-        if args.delM != None or args.delPM or args.fixM:
-            #print(f"All Crossings that are in Kn - M, Matchingsize: {args.delM}, amount of remaining crosings: {len(masked_crossing_vars)}")
+        if args.fixMUp != None or args.fixMLow != None:
 
             deleted_edges = set()
             for (a, b), var in all_edges_.items():
                 if -var in sol:  # Edge is disabled
                     if a < b:
                         deleted_edges.add((a, b))
-            print(f" These are the delted edges: {deleted_edges}")
             if deleted_edges not in deleted_perfect_matchings:
                 deleted_perfect_matchings.append(deleted_edges)
             
@@ -1253,11 +993,8 @@ else:
 
             # Output results
             print(f"{len(remaining_crossings)} Active crossings: {remaining_crossings}")
-
             print(f"{len(deleted_crossings)} Deleted crossings: {deleted_crossings}")
-            print(f"{len(deleted_perfect_matchings)} Deleted PMs: {deleted_perfect_matchings}")
 
-#________________________________________________________________________________________________________________________________________________________________
 
         rs = []
     
@@ -1366,5 +1103,3 @@ else:
 
     print("solving time :",time_end-time_before_solving)
     print("total time   :",time_end-time_start)
-
-
