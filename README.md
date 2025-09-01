@@ -19,13 +19,13 @@ ________________________________________________________________________________
 
 The following parameters have been added by me (version from 1.9.2025)
 
---fixMUp       : Given a matching (I)  and a upper bound (U) for crossing -> With this you can search for a Kn-I with cr(Kn-I) <= U
---fixmLow       : Given a matching (I)  and a upper bound (L) for crossing -> With this you can search for a Kn-I with cr(Kn-I) >= L
---twoColor      : Parameter with can be used to allow 2-color-crossings (disabled by default)
+--fixMUp       : Given a matching (I)  and a upper bound (U) for crossing -> With this you can search for a Kn-I with cr(Kn-I) <= U  
+--fixmLow       : Given a matching (I)  and a upper bound (L) for crossing -> With this you can search for a Kn-I with cr(Kn-I) >= L  
+--twoColor      : Parameter with can be used to allow 2-color-crossings (disabled by default)  
 
---goodOcta      : Given a lower bound (L) -> This ensures there are atleast L crossings in all induced octahedrons default value is 1 
---octaFix       : Given a value (k)       -> This ensures there is at least one induced octahedron with k crossings
---goodCross     : Given a value (k)       -> This ensures there are at least k good (4-color) crossings when you connect a Kn - I with an apex vertex. I is a perfect matching
+--goodOcta      : Given a lower bound (L) -> This ensures there are atleast L crossings in all induced octahedrons default value is 1   
+--octaFix       : Given a value (k)       -> This ensures there is at least one induced octahedron with k crossings  
+--goodCross     : Given a value (k)       -> This ensures there are at least k good (4-color) crossings when you connect a Kn - I with an apex vertex. I is a perfect matching  
 
 
 _______________________________________________________________________________________________________________________________________________________
