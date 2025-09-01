@@ -30,7 +30,7 @@ The following parameters have been added by me (version from 1.9.2025)
 
 _______________________________________________________________________________________________________________________________________________________
 
-THe parameters -fixMUp, -fixMLow, -twoColor are for complete graphs missing a matching quiet usefull.  
+The parameters -fixMUp, -fixMLow, -twoColor are for complete graphs missing a matching quiet usefull.  
 The parameter -goodOcta, -octaFix, -goodCross were designed for a very specific use and might not be usefull for others  
 In all my code I tried to use Manfred Scheuchers style. I am sure there are parts which can be made "more optimal"  
 ________________________________________________________________________________________________________________________________________________________
