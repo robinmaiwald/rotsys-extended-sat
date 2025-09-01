@@ -17,13 +17,21 @@ I did this so I could link the project in my thesis and in case someone is intre
 
 ________________________________________________________________________________________________________________________________________________________
 
-Due to time resaons I have not added the Instructions yet.  
-I will do so and then note it here.  
-Also I am planing to create a "cleaner" version of rotsys-extension.py within the next week(s)? I will also note this here  
-Also I plan on marking all sections done by me in the rotsys-extended.py   
-________________________________________________________________________________________________________________________________________________________
+The following parameters have been added by me (version from 1.9.2025)
+
+--fixMUp       : Given a matching (I)  and a upper bound (U) for crossing -> With this you can search for a Kn-I with cr(Kn-I) <= U
+--fixmLow       : Given a matching (I)  and a upper bound (L) for crossing -> With this you can search for a Kn-I with cr(Kn-I) >= L
+--twoColor      : Parameter with can be used to allow 2-color-crossings (disabled by default)
+
+--goodOcta      : Given a lower bound (L) -> This ensures there are atleast L crossings in all induced octahedrons default value is 1 
+--octaFix       : Given a value (k)       -> This ensures there is at least one induced octahedron with k crossings
+--goodCross     : Given a value (k)       -> This ensures there are at least k good (4-color) crossings when you connect a Kn - I with an apex vertex. I is a perfect matching
 
 
+_______________________________________________________________________________________________________________________________________________________
 
+THe parameters -fixMUp, -fixMLow, -twoColor are for complete graphs missing a matching quiet usefull.
+The parameter -goodOcta, -octaFix, -goodCross were designed for a very specific use and might not be usefull for others
+In all my code I tried to use Manfred Scheuchers style. I am sure there are parts which can be made "more optimal"
 ________________________________________________________________________________________________________________________________________________________
 
