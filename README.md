@@ -35,3 +35,9 @@ The parameter -goodOcta, -octaFix, -goodCross were designed for a very specific 
 In all my code I tried to use Manfred Scheuchers style. I am sure there are parts which can be made "more optimal"  
 ________________________________________________________________________________________________________________________________________________________
 
+I added my programm generate_matchings.py
+Given n,k this programm generates all possible matchings I, |I| = k from the complete graph Kn.
+They get saved to a txt file called matchings_"n"v_"k"e.txt
+
+
+
