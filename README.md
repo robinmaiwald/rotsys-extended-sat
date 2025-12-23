@@ -5,7 +5,6 @@ The SAT-Framework in this project was designed by Manfred Scheucher (and Helena 
 Link to the original project which is cloned: https://github.com/manfredscheucher/rotsys-sat/tree/main    
 All Credit regarding the creation of this framework belongs to him (and her)    
 ________________________________________________________________________________________________________________________________________________________
-________________________________________________________________________________________________________________________________________________________
 
 I used this Framework to study properties of almost complete graphs (complete graphs missing a matching) for my bachelor thesis
 For this is extended the framework by creating additional parameters  
