@@ -24,7 +24,7 @@ The following parameters have been added by me (version from 1.9.2025)
 
 -goodOcta      : Given a lower bound (L) -> This ensures there are atleast L crossings in all induced octahedrons default value is 1   
 -octaFix       : Given a value (k)       -> This ensures there is at least one induced octahedron with k crossings  
--goodCross     : Given a value (k)       -> This ensures there are at least k good (4-color) crossings when you connect a Kn - I with an apex vertex, I is a perfect matching  
+-goodCross     : Given a value (k)       -> This ensures there are at least k good (4-color) crossings when you connect a Kn - I with an apex vertex - I is a perfect matching  
 
 
 _______________________________________________________________________________________________________________________________________________________
