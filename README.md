@@ -1,19 +1,19 @@
 __IMPORTANT NOTE__
 ________________________________________________________________________________________________________________________________________________________
 
-The SAT-Framework in this project was designed by Manfred Scheucher (and Helena Bergold?)  
+The SAT-Framework in this project was designed by Manfred Scheucher (and Helena Bergold)  
 Link to the original project which is cloned: https://github.com/manfredscheucher/rotsys-sat/tree/main    
-All Credit regarding the creation of this framework belongs to him (and her?).    
+All Credit regarding the creation of this framework belongs to him (and her)    
 ________________________________________________________________________________________________________________________________________________________
 ________________________________________________________________________________________________________________________________________________________
 
-I used this Framework to study properties of almost complete graphs (complete graphs missing a (perfect) matching) for my bachelor thesis  
-For this is extended the framework by creating additional parameters.  
-The diffrence between this project and the  one on Manfreds Scheucher GitHub is that I added additional Parameters to rotsys.py  
+I used this Framework to study properties of almost complete graphs (complete graphs missing a matching) for my bachelor thesis
+For this is extended the framework by creating additional parameters  
+The diffrence between this project and the one on Manfreds Scheucher GitHub is that I added additional Parameters to rotsys.py
 So what did I do exactly:  
-I cloned his project and added rotsys-extension.py - an extension of his version rotsys.py.  
-For transparency I left the original rotsys.py.  
-I did this so I could link the project in my thesis and in case someone is intrested in the additonal parameters.  
+I cloned his project and added rotsys-extension.py - an extension of his version rotsys.py
+For transparency I left the original rotsys.py
+I did this so I could link the project in my thesis and in case someone is intrested in the additonal parameters  
 
 ________________________________________________________________________________________________________________________________________________________
 
@@ -30,7 +30,7 @@ The following parameters have been added by me (version from 1.9.2025)
 
 _______________________________________________________________________________________________________________________________________________________
 
-The parameters -fixMUp, -fixMLow, -twoColor are for complete graphs missing a matching quiet usefull.  
+The parameters -fixMUp, -fixMLow, -twoColor are for complete graphs missing a matching quiet usefull  
 The parameter -goodOcta, -octaFix, -goodCross were designed for a very specific use and might not be usefull for others  
 In all my code I tried to use Manfred Scheuchers style. I am sure there are parts which can be made "more optimal"  
 ________________________________________________________________________________________________________________________________________________________
