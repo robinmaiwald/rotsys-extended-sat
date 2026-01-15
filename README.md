@@ -8,8 +8,8 @@ ________________________________________________________________________________
 
 I used this framework to study properties of almost complete graphs (complete graphs missing a matching) for my bachelor's thesis.
 To do this I extended the framework by creating additional parameters.  
-The difference between this project and the one on Manfred's Scheucher GitHub is that I added additional parameters to rotsys.py.
-SO here is what I did:  
+The difference between this project and the one on Manfred's Scheucher GitHub is that I added additional parameters to rotsys.py.  
+So here is what I did:  
 I cloned his project and added rotsys-extension.py - an extension of his version of rotsys.py.
 For transparency, I left the original rotsys.py.
 I did this so I could link the project in my thesis and in case someone is interested in the additional parameters.  
